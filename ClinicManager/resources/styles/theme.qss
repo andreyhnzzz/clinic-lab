@@ -1,0 +1,184 @@
+/* ClinicManager – Medical theme stylesheet
+ * Color palette:
+ *   Primary blue  : #1565C0
+ *   Light blue    : #1E88E5
+ *   Accent green  : #2E7D32
+ *   Background    : #F5F7FA
+ *   Surface white : #FFFFFF
+ *   Text dark     : #212121
+ *   Divider       : #E0E0E0
+ */
+
+QMainWindow, QWidget {
+    background-color: #F5F7FA;
+    color: #212121;
+    font-family: "Segoe UI", "Noto Sans", sans-serif;
+    font-size: 12px;
+}
+
+/* ── Menu bar ──────────────────────────────────────────────────────────────── */
+QMenuBar {
+    background-color: #1565C0;
+    color: #FFFFFF;
+    padding: 2px 4px;
+}
+
+QMenuBar::item:selected {
+    background-color: #1E88E5;
+    border-radius: 4px;
+}
+
+QMenu {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+}
+
+QMenu::item:selected {
+    background-color: #E3F2FD;
+    color: #1565C0;
+}
+
+/* ── Navigation list (left panel) ─────────────────────────────────────────── */
+QListWidget#navList {
+    background-color: #1565C0;
+    color: #FFFFFF;
+    border: none;
+    outline: none;
+    font-size: 12px;
+}
+
+QListWidget#navList::item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #1976D2;
+}
+
+QListWidget#navList::item:selected {
+    background-color: #0D47A1;
+    color: #FFFFFF;
+    font-weight: bold;
+    border-left: 4px solid #64B5F6;
+}
+
+QListWidget#navList::item:hover:!selected {
+    background-color: #1976D2;
+}
+
+/* ── Table views ──────────────────────────────────────────────────────────── */
+QTableView, QTableWidget {
+    background-color: #FFFFFF;
+    alternate-background-color: #F8FBFF;
+    gridline-color: #E0E0E0;
+    border: 1px solid #E0E0E0;
+    selection-background-color: #BBDEFB;
+    selection-color: #212121;
+}
+
+QHeaderView::section {
+    background-color: #1565C0;
+    color: #FFFFFF;
+    padding: 6px 8px;
+    border: none;
+    border-right: 1px solid #1976D2;
+    font-weight: bold;
+}
+
+/* ── Tree widget ──────────────────────────────────────────────────────────── */
+QTreeWidget {
+    background-color: #FFFFFF;
+    alternate-background-color: #F5F5F5;
+    border: 1px solid #E0E0E0;
+    selection-background-color: #BBDEFB;
+}
+
+QTreeWidget::item {
+    padding: 3px;
+}
+
+QTreeWidget::item:selected {
+    background-color: #1E88E5;
+    color: #FFFFFF;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+QPushButton {
+    background-color: #E3F2FD;
+    color: #1565C0;
+    border: 1px solid #90CAF9;
+    border-radius: 4px;
+    padding: 5px 14px;
+    min-width: 80px;
+}
+
+QPushButton:hover {
+    background-color: #BBDEFB;
+    border-color: #1E88E5;
+}
+
+QPushButton:pressed {
+    background-color: #90CAF9;
+}
+
+QPushButton#primaryButton {
+    background-color: #1565C0;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+QPushButton#primaryButton:hover {
+    background-color: #1E88E5;
+}
+
+/* ── Input fields ─────────────────────────────────────────────────────────── */
+QLineEdit, QComboBox {
+    background-color: #FFFFFF;
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    padding: 4px 8px;
+    selection-background-color: #1E88E5;
+    selection-color: #FFFFFF;
+}
+
+QLineEdit:focus, QComboBox:focus {
+    border-color: #1E88E5;
+}
+
+/* ── Group boxes ──────────────────────────────────────────────────────────── */
+QGroupBox {
+    border: 1px solid #90CAF9;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 6px;
+    font-weight: bold;
+    color: #1565C0;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+}
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+QProgressBar {
+    border: 1px solid #90CAF9;
+    border-radius: 4px;
+    text-align: center;
+    height: 16px;
+}
+
+QProgressBar::chunk {
+    background-color: #1E88E5;
+    border-radius: 3px;
+}
+
+/* ── Status bar ───────────────────────────────────────────────────────────── */
+QStatusBar {
+    background-color: #E3F2FD;
+    color: #1565C0;
+    border-top: 1px solid #90CAF9;
+}
+
+/* ── Splitter handle ──────────────────────────────────────────────────────── */
+QSplitter::handle {
+    background-color: #E0E0E0;
+}

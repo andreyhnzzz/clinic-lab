@@ -1,0 +1,43 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled objects and binaries
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dll
+*.lib
+*.a
+
+# Qt generated files
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# IDE files
+.vscode/
+.vs/
+*.user
+*.suo
+.idea/
+
+# Qt Creator
+*.pro.user
+*.qmlproject.user
+
+# OS files
+.DS_Store
+Thumbs.db
