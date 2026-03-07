@@ -202,8 +202,8 @@ void RecordsSearchWidget::onSearchByDate() {
     auto t0 = std::chrono::high_resolution_clock::now();
     QString sFrom = from, sTo = to;
     QVector<Consulta> all = module_->getAllConsultas();
+    std::string sf = sFrom.toStdString(), st = sTo.toStdString();
     QVector<Consulta> linear = linearSearchAll<Consulta>(all, [&](const Consulta& c){
-        std::string sf = sFrom.toStdString(), st = sTo.toStdString();
         return c.fecha >= sf && c.fecha <= st;
     });
     double linearTime = std::chrono::duration<double, std::milli>(

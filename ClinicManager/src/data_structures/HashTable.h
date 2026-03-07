@@ -79,7 +79,7 @@ private:
     }
 
     void resize() {
-        QVector<Entry> old = table_;
+        QVector<Entry> old = std::move(table_);
         capacity_ *= 2;
         table_ = QVector<Entry>(capacity_);
         size_ = 0;

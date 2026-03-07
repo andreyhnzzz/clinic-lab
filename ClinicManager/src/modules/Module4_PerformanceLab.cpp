@@ -6,7 +6,12 @@
 #include "../algorithms/searching/LinearSearch.h"
 #include "../algorithms/searching/BinarySearch.h"
 #include <algorithm>
-#include <cstdlib>
+#include <random>
+
+static std::mt19937& rng4() {
+    static std::mt19937 gen(std::random_device{}());
+    return gen;
+}
 
 Module4_PerformanceLab::Module4_PerformanceLab(QObject* parent)
     : QObject(parent) {}
@@ -16,7 +21,8 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmark(int dataSize, cons
 
     QVector<int> base;
     base.reserve(dataSize);
-    for (int i = 0; i < dataSize; ++i) base.push_back(rand() % 1000000);
+    std::uniform_int_distribution<int> dist(0, 999999);
+    for (int i = 0; i < dataSize; ++i) base.push_back(dist(rng4()));
 
     QVector<BenchmarkResult> results;
     PerformanceMeter meter;

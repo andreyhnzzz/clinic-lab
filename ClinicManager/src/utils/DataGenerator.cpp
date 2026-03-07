@@ -114,6 +114,7 @@ QString DataGenerator::randomDate(int yearFrom, int yearTo) {
     if (month == 1 || month == 3 || month == 5 || month == 7 ||
         month == 8 || month == 10 || month == 12) maxDay = 31;
     else if (month != 2) maxDay = 30;
+    else if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) maxDay = 29;
     int day = randInt(1, maxDay);
     return QString("%1-%2-%3")
         .arg(year)

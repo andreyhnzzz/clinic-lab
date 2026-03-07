@@ -8,6 +8,12 @@
 #include "../algorithms/searching/BinarySearch.h"
 #include "../models/Paciente.h"
 #include <algorithm>
+#include <random>
+
+static std::mt19937& rngPM() {
+    static std::mt19937 gen(std::random_device{}());
+    return gen;
+}
 
 void PerformanceMeter::start() {
     running_ = true;
@@ -32,7 +38,8 @@ QVector<BenchmarkResult> PerformanceMeter::benchmarkSorts(int dataSize) {
     // Generate random int array once
     QVector<int> base;
     base.reserve(dataSize);
-    for (int i = 0; i < dataSize; ++i) base.push_back(rand() % 1000000);
+    std::uniform_int_distribution<int> dist(0, 999999);
+    for (int i = 0; i < dataSize; ++i) base.push_back(dist(rngPM()));
 
     auto bench = [&](const QString& name, auto sortFn) -> BenchmarkResult {
         QVector<int> copy = base;
