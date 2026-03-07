@@ -9,9 +9,10 @@ int main(int argc, char* argv[]) {
     app.setApplicationVersion("1.0.0");
     app.setOrganizationName("Universidad");
 
-    // Load stylesheet
+    // Load stylesheet — try embedded resource first, then on-disk fallbacks
     QStringList stylePaths = {
-        "resources/styles.qss",
+        ":/styles.qss",                                                    // Qt resource (embedded)
+        "resources/styles.qss",                                            // relative to working dir
         QDir::currentPath() + "/resources/styles.qss",
         QCoreApplication::applicationDirPath() + "/resources/styles.qss"
     };

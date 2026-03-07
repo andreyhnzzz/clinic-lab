@@ -58,6 +58,7 @@ set(HEADERS
 qt_add_executable(ClinicManager
     ${SOURCES}
     ${HEADERS}
+    resources/resources.qrc
 )
 
 target_link_libraries(ClinicManager PRIVATE

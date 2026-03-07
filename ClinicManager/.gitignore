@@ -1,0 +1,15 @@
+# Qt Creator per-user project settings (never commit these)
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+
+# Qt Creator shadow-build directories
+build-*/
+
+# Generic build directory (command-line builds)
+build/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
