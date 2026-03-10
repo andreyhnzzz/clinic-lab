@@ -106,6 +106,22 @@ QPushButton:disabled {
     color: #777777;
 }
 
+QPushButton#primaryButton {
+    background-color: #00BCD4;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 18px;
+    font-weight: bold;
+}
+
+QPushButton#primaryButton:hover { background-color: #26C6DA; }
+QPushButton#primaryButton:pressed { background-color: #0097A7; }
+QPushButton#primaryButton:disabled {
+    background-color: #444444;
+    color: #777777;
+}
+
 QPushButton#successButton {
     background-color: #4CAF50;
     color: #ffffff;

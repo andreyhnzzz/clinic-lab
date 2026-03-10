@@ -5,6 +5,7 @@
 #include <QStringList>
 #include <QPair>
 #include <QFuture>
+#include <functional>
 #include "../utils/PerformanceMeter.h"
 
 class Module4_PerformanceLab : public QObject {
@@ -12,15 +13,22 @@ class Module4_PerformanceLab : public QObject {
 public:
     explicit Module4_PerformanceLab(QObject* parent = nullptr);
 
-    // Run sort benchmarks for given size and algorithms
+    // Benchmark thread-safe, sin depender de QObject ni señales.
+    static QVector<BenchmarkResult> runBenchmarkBatch(
+        int dataSize,
+        const QStringList& algorithms,
+        const std::function<void(int)>& progressCb = {});
+
+    // Conveniencia legacy: llamar solo desde hilo GUI (emite señales y muta historial).
     QVector<BenchmarkResult> runBenchmark(int dataSize, const QStringList& algorithms);
 
     // Compare linear vs binary search
     QPair<double, double> compareSearchMethods(int dataSize);
 
-    // Get all accumulated results
+    // Historial
     const QVector<QVector<BenchmarkResult>>& getHistory() const { return history_; }
     void clearHistory() { history_.clear(); }
+    void appendToHistory(const QVector<BenchmarkResult>& batch);
 
 signals:
     void benchmarkStarted(int dataSize);

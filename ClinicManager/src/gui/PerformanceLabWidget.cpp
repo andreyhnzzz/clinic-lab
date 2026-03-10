@@ -16,8 +16,14 @@ PerformanceLabWidget::PerformanceLabWidget(QWidget* parent)
     setupUI();
 
     connect(watcher_, &QFutureWatcher<QVector<BenchmarkResult>>::finished, this, [this](){
-        onBenchmarkDone(watcher_->result());
+        auto results = watcher_->result();
+        module_->appendToHistory(results);
+        updateBarChart(results);
+        updateGrowthChart(module_->getHistory());
+        addResultsToTable(results);
         btnRun_->setEnabled(true);
+        btnClear_->setEnabled(true);
+        btnSearchComp_->setEnabled(true);
         progressBar_->setValue(100);
         lblStatus_->setText("Benchmark completado.");
     });
@@ -185,12 +191,21 @@ void PerformanceLabWidget::onRunBenchmark() {
     }
 
     btnRun_->setEnabled(false);
+    btnClear_->setEnabled(false);
+    btnSearchComp_->setEnabled(false);
     progressBar_->setValue(0);
     lblStatus_->setText(QString("Ejecutando benchmark para n=%1...").arg(dataSize));
 
-    // Run in background thread
-    auto future = QtConcurrent::run([this, dataSize, selectedAlgs]() -> QVector<BenchmarkResult> {
-        return module_->runBenchmark(dataSize, selectedAlgs);
+    // Run in background thread (no acceso a QObject desde el worker)
+    auto future = QtConcurrent::run([this, dataSize, selectedAlgs]() {
+        return Module4_PerformanceLab::runBenchmarkBatch(
+            dataSize,
+            selectedAlgs,
+            [this](int p){
+                QMetaObject::invokeMethod(this, [this, p](){
+                    progressBar_->setValue(p);
+                }, Qt::QueuedConnection);
+            });
     });
     watcher_->setFuture(future);
 }
@@ -207,33 +222,39 @@ void PerformanceLabWidget::updateBarChart(const QVector<BenchmarkResult>& result
     double maxVal = 0.0;
 
     for (const auto& r : results) {
-        double val = r.timeMs >= 0.0 ? r.timeMs : 0.0;
+        if (r.timeMs < 0.0) continue; // omitidos no se grafican
+        double val = r.timeMs;
         *barSet << val;
         categories << r.algorithmName;
         if (val > maxVal) maxVal = val;
     }
 
-    auto* series = new QBarSeries();
-    series->append(barSet);
-
     auto* chart = new QChart();
-    chart->addSeries(series);
-    chart->setTitle(QString("Tiempos por Algoritmo (n=%1)").arg(results.isEmpty() ? 0 : results[0].dataSize));
     chart->setTheme(QChart::ChartThemeDark);
 
-    auto* axisX = new QBarCategoryAxis();
-    axisX->append(categories);
-    chart->addAxis(axisX, Qt::AlignBottom);
-    series->attachAxis(axisX);
+    if (!categories.isEmpty()) {
+        auto* series = new QBarSeries();
+        series->append(barSet);
+        chart->addSeries(series);
+        chart->setTitle(QString("Tiempos por Algoritmo (n=%1)").arg(results.isEmpty() ? 0 : results[0].dataSize));
 
-    auto* axisY = new QValueAxis();
-    axisY->setTitleText("Tiempo (ms)");
-    axisY->setMin(0);
-    axisY->setMax(maxVal * 1.1 + 0.1);
-    chart->addAxis(axisY, Qt::AlignLeft);
-    series->attachAxis(axisY);
+        auto* axisX = new QBarCategoryAxis();
+        axisX->append(categories);
+        chart->addAxis(axisX, Qt::AlignBottom);
+        series->attachAxis(axisX);
 
-    chart->legend()->setVisible(false);
+        auto* axisY = new QValueAxis();
+        axisY->setTitleText("Tiempo (ms)");
+        axisY->setMin(0);
+        axisY->setMax(maxVal * 1.1 + 0.1);
+        chart->addAxis(axisY, Qt::AlignLeft);
+        series->attachAxis(axisY);
+
+        chart->legend()->setVisible(false);
+    } else {
+        chart->setTitle("Tiempos por Algoritmo (todos omitidos)");
+    }
+
     barChartView_->setChart(chart);
 }
 
@@ -255,7 +276,15 @@ void PerformanceLabWidget::updateGrowthChart(const QVector<QVector<BenchmarkResu
     auto* chart = new QChart();
     chart->setTitle("Curva de Crecimiento");
     chart->setTheme(QChart::ChartThemeDark);
-    for (auto* s : seriesMap) chart->addSeries(s);
+
+    for (auto* s : seriesMap) {
+        auto pts = s->points();
+        std::sort(pts.begin(), pts.end(), [](const QPointF& a, const QPointF& b){
+            return a.x() < b.x();
+        });
+        s->replace(pts);
+        chart->addSeries(s);
+    }
     chart->createDefaultAxes();
 
     if (!chart->axes(Qt::Horizontal).isEmpty())
