@@ -14,6 +14,7 @@ set(SOURCES
     src/models/Paciente.cpp
     src/models/Consulta.cpp
     src/models/Diagnostico.cpp
+    src/core/ClinicDataStore.cpp
     src/data_structures/DiagnosisTree.cpp
     src/modules/Module1_AttentionQueue.cpp
     src/modules/Module2_RecordsSearch.cpp
@@ -32,6 +33,7 @@ set(HEADERS
     src/models/Paciente.h
     src/models/Consulta.h
     src/models/Diagnostico.h
+    src/core/ClinicDataStore.h
     src/data_structures/PriorityQueue.h
     src/data_structures/DiagnosisTree.h
     src/data_structures/HashTable.h

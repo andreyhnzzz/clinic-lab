@@ -7,23 +7,31 @@
 #include <QFuture>
 #include <functional>
 #include "../utils/PerformanceMeter.h"
+#include "../models/Paciente.h"
+#include "../models/Consulta.h"
 
 class Module4_PerformanceLab : public QObject {
     Q_OBJECT
 public:
     explicit Module4_PerformanceLab(QObject* parent = nullptr);
 
-    // Benchmark thread-safe, sin depender de QObject ni señales.
+    // Benchmark using real data (patients or consultations)
     static QVector<BenchmarkResult> runBenchmarkBatch(
+        const QVector<Paciente>& pacientes,
+        const QVector<Consulta>& consultas,
+        const QString& datasetType,   // "Pacientes" or "Consultas"
+        const QString& sortField,
         int dataSize,
         const QStringList& algorithms,
         const std::function<void(int)>& progressCb = {});
 
-    // Conveniencia legacy: llamar solo desde hilo GUI (emite señales y muta historial).
-    QVector<BenchmarkResult> runBenchmark(int dataSize, const QStringList& algorithms);
-
-    // Compare linear vs binary search
-    QPair<double, double> compareSearchMethods(int dataSize);
+    // Compare linear vs binary search on real data
+    static QPair<double, double> compareSearchMethods(
+        const QVector<Paciente>& pacientes,
+        const QVector<Consulta>& consultas,
+        const QString& datasetType,
+        const QString& sortField,
+        int dataSize);
 
     // Historial
     const QVector<QVector<BenchmarkResult>>& getHistory() const { return history_; }

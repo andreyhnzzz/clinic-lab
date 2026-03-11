@@ -6,6 +6,14 @@
 #include "../models/Consulta.h"
 #include "../data_structures/HashTable.h"
 
+struct PatientRecord {
+    Paciente paciente;
+    QVector<Consulta> consultas;
+    int totalConsultas = 0;
+    int maxGravedad = 0;
+    QString ultimaConsultaFecha;
+};
+
 class Module2_RecordsSearch : public QObject {
     Q_OBJECT
 public:
@@ -19,6 +27,7 @@ public:
     QVector<Paciente> searchByName(const QString& name);     // Linear search
     QVector<Consulta> searchByDateRange(const QString& from, const QString& to); // Binary search
     QVector<Consulta> searchByGravedad(int gravedad);        // Linear search
+    PatientRecord getPatientRecord(const QString& cedula);
     QVector<Paciente> getAllPacientes() const;
     QVector<Consulta> getAllConsultas() const;
 

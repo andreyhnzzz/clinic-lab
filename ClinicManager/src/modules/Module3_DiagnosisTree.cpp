@@ -7,6 +7,18 @@ QVector<Diagnostico> Module3_DiagnosisTree::searchByName(const QString& query) {
     return tree_.searchByName(query);
 }
 
+QVector<Diagnostico> Module3_DiagnosisTree::searchByCode(const QString& code) {
+    return tree_.searchByCode(code);
+}
+
+QVector<Diagnostico> Module3_DiagnosisTree::listBySpecialty(const QString& specialty) {
+    return tree_.listBySpecialty(specialty);
+}
+
+QStringList Module3_DiagnosisTree::allSpecialties() const {
+    return tree_.allSpecialties();
+}
+
 QVector<Diagnostico> Module3_DiagnosisTree::preOrderTraversal() {
     return tree_.preOrderTraversal();
 }

@@ -112,6 +112,62 @@ QVector<Diagnostico> DiagnosisTree::searchByName(const QString& query) const {
     return results;
 }
 
+QVector<Diagnostico> DiagnosisTree::searchByCode(const QString& code) const {
+    QVector<Diagnostico> results;
+    QString lower = code.toLower();
+    QQueue<DiagnosisNode*> queue;
+    queue.enqueue(root_);
+    while (!queue.isEmpty()) {
+        DiagnosisNode* node = queue.dequeue();
+        if (node->level == 2 && node->code.toLower().contains(lower)) {
+            Diagnostico d;
+            d.codigo = node->code.toStdString();
+            d.nombre = node->name.toStdString();
+            d.categoria = node->parent ? node->parent->parent->name.toStdString() : "";
+            d.subcategoria = node->parent ? node->parent->name.toStdString() : "";
+            d.descripcion = node->description.toStdString();
+            results.push_back(d);
+        }
+        for (auto* child : node->children)
+            queue.enqueue(child);
+    }
+    return results;
+}
+
+QVector<Diagnostico> DiagnosisTree::listBySpecialty(const QString& specialty) const {
+    QVector<Diagnostico> results;
+    QString lower = specialty.toLower();
+    QQueue<DiagnosisNode*> queue;
+    queue.enqueue(root_);
+    while (!queue.isEmpty()) {
+        DiagnosisNode* node = queue.dequeue();
+        if (node->level == 1 && node->name.toLower() == lower) {
+            // Found specialty node - collect all diagnoses under it
+            for (auto* diag : node->children) {
+                Diagnostico d;
+                d.codigo = diag->code.toStdString();
+                d.nombre = diag->name.toStdString();
+                d.categoria = node->parent ? node->parent->name.toStdString() : "";
+                d.subcategoria = node->name.toStdString();
+                d.descripcion = diag->description.toStdString();
+                results.push_back(d);
+            }
+        }
+        for (auto* child : node->children)
+            queue.enqueue(child);
+    }
+    return results;
+}
+
+QStringList DiagnosisTree::allSpecialties() const {
+    QStringList list;
+    if (!root_) return list;
+    for (auto* area : root_->children)
+        for (auto* spec : area->children)
+            list.push_back(spec->name);
+    return list;
+}
+
 void DiagnosisTree::countHelper(DiagnosisNode* node, int& count) const {
     if (!node) return;
     count++;

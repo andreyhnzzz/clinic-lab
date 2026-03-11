@@ -76,6 +76,25 @@ QVector<Consulta> Module2_RecordsSearch::searchByGravedad(int gravedad) {
     return results;
 }
 
+PatientRecord Module2_RecordsSearch::getPatientRecord(const QString& cedula) {
+    PatientRecord rec;
+    auto opt = hashIndex_.find(cedula.toStdString());
+    if (!opt) return rec;
+    rec.paciente = *opt;
+    std::string ced = cedula.toStdString();
+    for (const auto& c : consultas_) {
+        if (c.cedulaPaciente == ced) {
+            rec.consultas.push_back(c);
+            if (c.gravedad > rec.maxGravedad) rec.maxGravedad = c.gravedad;
+            if (rec.ultimaConsultaFecha.isEmpty() ||
+                QString::fromStdString(c.fecha) > rec.ultimaConsultaFecha)
+                rec.ultimaConsultaFecha = QString::fromStdString(c.fecha);
+        }
+    }
+    rec.totalConsultas = rec.consultas.size();
+    return rec;
+}
+
 QVector<Paciente> Module2_RecordsSearch::getAllPacientes() const {
     return pacientes_;
 }

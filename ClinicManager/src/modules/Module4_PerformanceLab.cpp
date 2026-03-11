@@ -5,27 +5,68 @@
 #include "../algorithms/sorting/QuickSort.h"
 #include "../algorithms/searching/LinearSearch.h"
 #include "../algorithms/searching/BinarySearch.h"
+#include "../utils/DataGenerator.h"
 #include <algorithm>
 #include <random>
-
-static std::mt19937& rng4() {
-    static std::mt19937 gen(std::random_device{}());
-    return gen;
-}
 
 Module4_PerformanceLab::Module4_PerformanceLab(QObject* parent)
     : QObject(parent) {}
 
-QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
+// Helper: build a QVector<Paciente> of requested size from source, repeating/generating as needed
+static QVector<Paciente> preparePacientes(const QVector<Paciente>& source, int n) {
+    QVector<Paciente> data;
+    data.reserve(n);
+    if (source.isEmpty()) {
+        return DataGenerator::generatePacientes(n);
+    }
+    for (int i = 0; i < n; ++i)
+        data.push_back(source[i % source.size()]);
+    return data;
+}
+
+static QVector<Consulta> prepareConsultas(const QVector<Consulta>& source,
+                                           const QVector<Paciente>& pacs, int n) {
+    QVector<Consulta> data;
+    data.reserve(n);
+    if (source.isEmpty()) {
+        return DataGenerator::generateConsultas(pacs, n);
+    }
+    for (int i = 0; i < n; ++i)
+        data.push_back(source[i % source.size()]);
+    return data;
+}
+
+// Get comparator for patients
+static std::function<bool(const Paciente&, const Paciente&)> pacienteComparator(const QString& field) {
+    if (field == "Nombre")
+        return [](const Paciente& a, const Paciente& b) { return a.nombre < b.nombre; };
+    if (field == "Edad")
+        return [](const Paciente& a, const Paciente& b) { return a.edad < b.edad; };
+    if (field == "Fecha de Registro")
+        return [](const Paciente& a, const Paciente& b) { return a.fechaRegistro < b.fechaRegistro; };
+    // Prioridad
+    return [](const Paciente& a, const Paciente& b) { return a.prioridad < b.prioridad; };
+}
+
+// Get comparator for consultations
+static std::function<bool(const Consulta&, const Consulta&)> consultaComparator(const QString& field) {
+    if (field == "Gravedad")
+        return [](const Consulta& a, const Consulta& b) { return a.gravedad < b.gravedad; };
+    if (field == "Costo")
+        return [](const Consulta& a, const Consulta& b) { return a.costo < b.costo; };
+    // Fecha
+    return [](const Consulta& a, const Consulta& b) { return a.fecha < b.fecha; };
+}
+
+template<typename T>
+static QVector<BenchmarkResult> benchmarkSortAlgorithms(
+    const QVector<T>& baseData,
+    const std::function<bool(const T&, const T&)>& comp,
     int dataSize,
+    const QString& dataType,
     const QStringList& algorithms,
     const std::function<void(int)>& progressCb)
 {
-    QVector<int> base;
-    base.reserve(dataSize);
-    std::uniform_int_distribution<int> dist(0, 999999);
-    for (int i = 0; i < dataSize; ++i) base.push_back(dist(rng4()));
-
     QVector<BenchmarkResult> results;
     PerformanceMeter meter;
     bool slow = (dataSize > 10000);
@@ -33,23 +74,23 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
     int done = 0;
 
     for (const QString& alg : algorithms) {
-        BenchmarkResult r{alg, dataSize, -1.0, "int"};
-
+        BenchmarkResult r{alg, dataSize, -1.0, dataType};
 
         if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
+            r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(10000) + ")";
             results.push_back(r);
             if (progressCb) progressCb(++done * 100 / total);
             continue;
         }
 
-        QVector<int> copy = base;
+        QVector<T> copy = baseData;
         meter.start();
 
-        if      (alg == "Bubble Sort")    bubbleSort<int>(copy);
-        else if (alg == "Selection Sort") selectionSort<int>(copy);
-        else if (alg == "Insertion Sort") insertionSort<int>(copy);
-        else if (alg == "Quick Sort")     quickSort<int>(copy);
-        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end());
+        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
+        else if (alg == "Selection Sort") selectionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
+        else if (alg == "Insertion Sort") insertionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
+        else if (alg == "Quick Sort")     quickSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
+        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), comp);
 
         r.timeMs = meter.stop();
         results.push_back(r);
@@ -58,21 +99,119 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
     return results;
 }
 
-QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmark(int dataSize, const QStringList& algorithms) {
-    emit benchmarkStarted(dataSize);
-    QVector<BenchmarkResult> results = runBenchmarkBatch(
-        dataSize, algorithms,
-        [this](int p){ emit progressUpdated(p); });
-    appendToHistory(results);
-    emit benchmarkFinished(results);
-    return results;
+QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
+    const QVector<Paciente>& pacientes,
+    const QVector<Consulta>& consultas,
+    const QString& datasetType,
+    const QString& sortField,
+    int dataSize,
+    const QStringList& algorithms,
+    const std::function<void(int)>& progressCb)
+{
+    if (datasetType == "Pacientes") {
+        QVector<Paciente> data = preparePacientes(pacientes, dataSize);
+        auto comp = pacienteComparator(sortField);
+        return benchmarkSortAlgorithms<Paciente>(data, comp, dataSize,
+            "Pacientes/" + sortField, algorithms, progressCb);
+    } else {
+        QVector<Consulta> data = prepareConsultas(consultas, pacientes, dataSize);
+        auto comp = consultaComparator(sortField);
+        return benchmarkSortAlgorithms<Consulta>(data, comp, dataSize,
+            "Consultas/" + sortField, algorithms, progressCb);
+    }
 }
 
-QPair<double, double> Module4_PerformanceLab::compareSearchMethods(int dataSize) {
-    return PerformanceMeter::benchmarkSearchComparison(dataSize);
+QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
+    const QVector<Paciente>& pacientes,
+    const QVector<Consulta>& consultas,
+    const QString& datasetType,
+    const QString& sortField,
+    int dataSize)
+{
+    PerformanceMeter meter;
+    const int trials = 1000;
+
+    if (datasetType == "Pacientes") {
+        QVector<Paciente> data = preparePacientes(pacientes, dataSize);
+        auto comp = pacienteComparator(sortField);
+        std::sort(data.begin(), data.end(), comp);
+
+        // Pick a target from the middle
+        Paciente target = data[dataSize / 2];
+
+        // Linear search
+        meter.start();
+        for (int t = 0; t < trials; ++t) {
+            linearSearch<Paciente>(data, [&](const Paciente& p) {
+                return p.cedula == target.cedula;
+            });
+        }
+        double linearMs = meter.stop() / trials;
+
+        // Binary search (by the sort field)
+        meter.start();
+        for (int t = 0; t < trials; ++t) {
+            if (sortField == "Nombre") {
+                binarySearch<Paciente, std::string>(data, target.nombre,
+                    [](const Paciente& p, const std::string& key) -> int {
+                        return p.nombre.compare(key);
+                    });
+            } else if (sortField == "Edad") {
+                binarySearch<Paciente, int>(data, target.edad,
+                    [](const Paciente& p, const int& key) -> int {
+                        return p.edad - key;
+                    });
+            } else {
+                binarySearch<Paciente, std::string>(data, target.fechaRegistro,
+                    [](const Paciente& p, const std::string& key) -> int {
+                        return p.fechaRegistro.compare(key);
+                    });
+            }
+        }
+        double binaryMs = meter.stop() / trials;
+        return {linearMs, binaryMs};
+
+    } else {
+        QVector<Consulta> data = prepareConsultas(consultas, pacientes, dataSize);
+        auto comp = consultaComparator(sortField);
+        std::sort(data.begin(), data.end(), comp);
+
+        Consulta target = data[dataSize / 2];
+
+        meter.start();
+        for (int t = 0; t < trials; ++t) {
+            linearSearch<Consulta>(data, [&](const Consulta& c) {
+                return c.idConsulta == target.idConsulta;
+            });
+        }
+        double linearMs = meter.stop() / trials;
+
+        meter.start();
+        for (int t = 0; t < trials; ++t) {
+            if (sortField == "Gravedad") {
+                binarySearch<Consulta, int>(data, target.gravedad,
+                    [](const Consulta& c, const int& key) -> int {
+                        return c.gravedad - key;
+                    });
+            } else if (sortField == "Costo") {
+                binarySearch<Consulta, double>(data, target.costo,
+                    [](const Consulta& c, const double& key) -> int {
+                        if (c.costo < key) return -1;
+                        if (c.costo > key) return 1;
+                        return 0;
+                    });
+            } else {
+                binarySearch<Consulta, std::string>(data, target.fecha,
+                    [](const Consulta& c, const std::string& key) -> int {
+                        return c.fecha.compare(key);
+                    });
+            }
+        }
+        double binaryMs = meter.stop() / trials;
+        return {linearMs, binaryMs};
+    }
 }
 
 void Module4_PerformanceLab::appendToHistory(const QVector<BenchmarkResult>& batch) {
     history_.push_back(batch);
 }
-

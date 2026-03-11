@@ -24,7 +24,7 @@ public:
 
 private slots:
     void onRunBenchmark();
-    void onBenchmarkDone(QVector<BenchmarkResult> results);
+    void onRunFullSeries();
     void onSearchComparison();
 
 private:
@@ -32,16 +32,23 @@ private:
     void updateBarChart(const QVector<BenchmarkResult>& results);
     void updateGrowthChart(const QVector<QVector<BenchmarkResult>>& history);
     void addResultsToTable(const QVector<BenchmarkResult>& results);
+    QStringList getSelectedAlgorithms() const;
+    int getCurrentDataSize() const;
+    QString getDatasetType() const;
+    QString getSortField() const;
 
     Module4_PerformanceLab* module_ = nullptr;
 
     QComboBox* cbSize_ = nullptr;
+    QComboBox* cbDataset_ = nullptr;
+    QComboBox* cbField_ = nullptr;
     QCheckBox* chkBubble_ = nullptr;
     QCheckBox* chkSelection_ = nullptr;
     QCheckBox* chkInsertion_ = nullptr;
     QCheckBox* chkQuick_ = nullptr;
     QCheckBox* chkStd_ = nullptr;
     QPushButton* btnRun_ = nullptr;
+    QPushButton* btnRunSeries_ = nullptr;
     QPushButton* btnClear_ = nullptr;
     QProgressBar* progressBar_ = nullptr;
     QLabel* lblStatus_ = nullptr;
@@ -56,4 +63,6 @@ private:
     QPushButton* btnSearchComp_ = nullptr;
 
     QFutureWatcher<QVector<BenchmarkResult>>* watcher_ = nullptr;
+    bool runningFullSeries_ = false;
+    int fullSeriesIndex_ = 0;
 };
