@@ -58,6 +58,9 @@ static std::function<bool(const Consulta&, const Consulta&)> consultaComparator(
     return [](const Consulta& a, const Consulta& b) { return a.fecha < b.fecha; };
 }
 
+// Threshold above which O(n^2) algorithms are omitted for practical viability
+static constexpr int SLOW_ALGORITHM_THRESHOLD = 10000;
+
 template<typename T>
 static QVector<BenchmarkResult> benchmarkSortAlgorithms(
     const QVector<T>& baseData,
@@ -69,7 +72,7 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
 {
     QVector<BenchmarkResult> results;
     PerformanceMeter meter;
-    bool slow = (dataSize > 10000);
+    bool slow = (dataSize > SLOW_ALGORITHM_THRESHOLD);
     int total = algorithms.size();
     int done = 0;
 
@@ -77,7 +80,7 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
         BenchmarkResult r{alg, dataSize, -1.0, dataType};
 
         if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
-            r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(10000) + ")";
+            r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ")";
             results.push_back(r);
             if (progressCb) progressCb(++done * 100 / total);
             continue;

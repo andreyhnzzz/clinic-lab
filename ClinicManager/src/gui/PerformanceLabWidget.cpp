@@ -355,7 +355,6 @@ void PerformanceLabWidget::updateBarChart(const QVector<BenchmarkResult>& result
         chart->legend()->setVisible(false);
     } else {
         chart->setTitle("Tiempos por Algoritmo (todos omitidos)");
-        delete barSet;
     }
 
     barChartView_->setChart(chart);

@@ -50,6 +50,8 @@ void insertionSortRange(QVector<T>& arr, int low, int high,
 template<typename T>
 void quickSortHelper(QVector<T>& arr, int low, int high,
                      std::function<bool(const T&, const T&)>& comp) {
+    // Cutoff to insertion sort for small subarrays: reduces overhead of recursive
+    // calls and partitioning; empirically optimal in the range 10-20 for cache efficiency.
     if (high - low < 16) {
         if (low < high) insertionSortRange(arr, low, high, comp);
         return;

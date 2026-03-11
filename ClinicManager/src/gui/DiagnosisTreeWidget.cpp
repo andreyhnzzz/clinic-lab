@@ -6,6 +6,9 @@
 #include <QFont>
 #include <QHeaderView>
 
+// Shared highlight color for search matches
+static const QColor SEARCH_HIGHLIGHT_COLOR("#1E3A5F");
+
 DiagnosisTreeWidget::DiagnosisTreeWidget(QWidget* parent)
     : QWidget(parent) {
     module_ = new Module3_DiagnosisTree(this);
@@ -154,7 +157,7 @@ void DiagnosisTreeWidget::onSearchByName() {
             for (int k = 0; k < spec->childCount(); ++k) {
                 auto* diag = spec->child(k);
                 bool match = diag->text(0).toLower().contains(lower);
-                diag->setBackground(0, match ? QColor("#1E3A5F") : QBrush());
+                diag->setBackground(0, match ? SEARCH_HIGHLIGHT_COLOR : QBrush());
                 if (match) {
                     treeWidget_->scrollToItem(diag);
                     area->setExpanded(true);
@@ -180,8 +183,8 @@ void DiagnosisTreeWidget::onSearchByCode() {
             for (int k = 0; k < spec->childCount(); ++k) {
                 auto* diag = spec->child(k);
                 bool match = diag->text(1).toLower().contains(lower);
-                diag->setBackground(0, match ? QColor("#1E3A5F") : QBrush());
-                diag->setBackground(1, match ? QColor("#1E3A5F") : QBrush());
+                diag->setBackground(0, match ? SEARCH_HIGHLIGHT_COLOR : QBrush());
+                diag->setBackground(1, match ? SEARCH_HIGHLIGHT_COLOR : QBrush());
                 if (match) {
                     treeWidget_->scrollToItem(diag);
                     area->setExpanded(true);
