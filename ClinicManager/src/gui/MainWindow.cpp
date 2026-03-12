@@ -3,16 +3,12 @@
 #include "RecordsSearchWidget.h"
 #include "DiagnosisTreeWidget.h"
 #include "PerformanceLabWidget.h"
-<<<<<<< HEAD
 #include "../core/ClinicDataStore.h"
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 #include <QApplication>
 #include <QMessageBox>
 #include <QMenu>
 #include <QAction>
 #include <QVBoxLayout>
-<<<<<<< HEAD
 #include <QHBoxLayout>
 #include <QTimer>
 #include <QFile>
@@ -28,26 +24,11 @@ MainWindow::MainWindow(QWidget* parent)
     setupUI();
     setupMenuBar();
     setupStatusBar();
-=======
-#include <QTimer>
-#include <QFile>
-
-MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent) {
-    setWindowTitle("Clínica Management System — Costa Rica");
-    setMinimumSize(1100, 750);
-    resize(1280, 800);
-    setupUI();
-    setupMenuBar();
-    setupStatusBar();
-    loadStyleSheet();
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
     // Update status every 30 seconds
     auto* timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updateStatusBar);
     timer->start(30000);
-<<<<<<< HEAD
 
     // Select first module
     switchModule(0);
@@ -129,20 +110,11 @@ void MainWindow::setupUI() {
 
     // Stacked widget for module content
     stack_ = new QStackedWidget(this);
-=======
-}
-
-void MainWindow::setupUI() {
-    tabs_ = new QTabWidget(this);
-    tabs_->setDocumentMode(false);
-
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     queueWidget_  = new AttentionQueueWidget(this);
     searchWidget_ = new RecordsSearchWidget(this);
     treeWidget_   = new DiagnosisTreeWidget(this);
     perfWidget_   = new PerformanceLabWidget(this);
 
-<<<<<<< HEAD
     stack_->addWidget(queueWidget_);
     stack_->addWidget(searchWidget_);
     stack_->addWidget(treeWidget_);
@@ -152,20 +124,11 @@ void MainWindow::setupUI() {
     mainLayout->addWidget(contentFrame, 1);
 
     setCentralWidget(centralWidget);
-=======
-    tabs_->addTab(queueWidget_,  "🏥  Cola de Atención");
-    tabs_->addTab(searchWidget_, "🔍  Búsqueda de Expedientes");
-    tabs_->addTab(treeWidget_,   "🌳  Árbol de Diagnósticos");
-    tabs_->addTab(perfWidget_,   "📊  Laboratorio de Rendimiento");
-
-    setCentralWidget(tabs_);
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
     connect(queueWidget_, &AttentionQueueWidget::queueSizeChanged,
             this, &MainWindow::updateStatusBar);
 }
 
-<<<<<<< HEAD
 void MainWindow::switchModule(int index) {
     if (index < 0 || index >= stack_->count()) return;
     stack_->setCurrentIndex(index);
@@ -184,8 +147,6 @@ void MainWindow::switchModule(int index) {
     headerTitle_->setText(titles[index]);
 }
 
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 void MainWindow::setupMenuBar() {
     QMenu* archivo = menuBar()->addMenu("&Archivo");
 
@@ -218,7 +179,6 @@ void MainWindow::setupStatusBar() {
         statusTime_->setText(QDateTime::currentDateTime().toString("hh:mm:ss"));
     });
     clockTimer->start(1000);
-<<<<<<< HEAD
 
     updateStatusBar();
 }
@@ -226,39 +186,16 @@ void MainWindow::setupStatusBar() {
 void MainWindow::updateStatusBar() {
     statusPatients_->setText(QString("Pacientes: %1").arg(
         ClinicDataStore::instance().pacienteCount()));
-=======
-}
-
-void MainWindow::loadStyleSheet() {
-    QFile f(":/styles.qss");
-    if (!f.exists()) {
-        // Try relative path
-        f.setFileName("resources/styles.qss");
-    }
-    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qApp->setStyleSheet(QString::fromUtf8(f.readAll()));
-        f.close();
-    }
-}
-
-void MainWindow::updateStatusBar() {
-    statusPatients_->setText(QString("Pacientes: %1").arg(searchWidget_->pacienteCount()));
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     statusQueue_->setText(QString("En cola: %1").arg(queueWidget_->queueSize()));
 }
 
 void MainWindow::onLoadSampleData() {
-<<<<<<< HEAD
     ClinicDataStore::instance().generateSampleData(500);
-=======
-    searchWidget_->loadSampleData(500);
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     updateStatusBar();
     statusBar()->showMessage("Datos de muestra cargados (500 pacientes)", 3000);
 }
 
 void MainWindow::onAbout() {
-<<<<<<< HEAD
     QMessageBox::about(this, "Acerca de Clinica Management System",
         "<h2>Clinica Management System</h2>"
         "<p>Sistema de gestion para clinica privada costarricense.</p>"
@@ -272,19 +209,5 @@ void MainWindow::onAbout() {
         "<li>Laboratorio de Rendimiento con datos reales</li>"
         "</ul>"
         "<p><b>Repositorio central de datos:</b> ClinicDataStore (singleton)</p>"
-=======
-    QMessageBox::about(this, "Acerca de Clínica Management System",
-        "<h2>Clínica Management System</h2>"
-        "<p>Sistema de gestión para clínica privada costarricense.</p>"
-        "<p><b>Versión:</b> 1.0.0</p>"
-        "<p><b>Tecnologías:</b> C++17, Qt6, Estructuras de datos propias</p>"
-        "<p><b>Módulos:</b></p>"
-        "<ul>"
-        "<li>Cola de Atención con Min-Heap</li>"
-        "<li>Búsqueda de Expedientes con HashTable y Búsqueda Binaria</li>"
-        "<li>Árbol de Diagnósticos N-ario</li>"
-        "<li>Laboratorio de Rendimiento de Algoritmos</li>"
-        "</ul>"
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
         "<p>Proyecto universitario — Estructuras de Datos</p>");
 }

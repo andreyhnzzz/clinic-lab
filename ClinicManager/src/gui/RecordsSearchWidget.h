@@ -7,11 +7,8 @@
 #include <QComboBox>
 #include <QDateEdit>
 #include <QPushButton>
-<<<<<<< HEAD
 #include <QTextEdit>
 #include <QFrame>
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 #include "../modules/Module2_RecordsSearch.h"
 
 class RecordsSearchWidget : public QWidget {
@@ -27,10 +24,7 @@ private slots:
     void onSearchByName();
     void onSearchByDate();
     void onSearchByGravedad();
-<<<<<<< HEAD
     void showPatientRecord(const QString& cedula);
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
 private:
     void setupUI();
@@ -41,11 +35,7 @@ private:
 
     QTabWidget* searchTabs_ = nullptr;
 
-<<<<<<< HEAD
     // Cedula tab
-=======
-    // Cédula tab
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     QLineEdit* edCedula_ = nullptr;
     QPushButton* btnCedula_ = nullptr;
 
@@ -67,10 +57,7 @@ private:
     QLabel* lblCount_ = nullptr;
     QLabel* lblLinear_ = nullptr;
     QLabel* lblBinary_ = nullptr;
-<<<<<<< HEAD
 
     // Patient record detail panel
     QTextEdit* patientDetail_ = nullptr;
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 };

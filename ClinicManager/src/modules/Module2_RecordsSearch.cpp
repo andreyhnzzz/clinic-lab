@@ -76,7 +76,6 @@ QVector<Consulta> Module2_RecordsSearch::searchByGravedad(int gravedad) {
     return results;
 }
 
-<<<<<<< HEAD
 PatientRecord Module2_RecordsSearch::getPatientRecord(const QString& cedula) {
     PatientRecord rec;
     auto opt = hashIndex_.find(cedula.toStdString());
@@ -96,8 +95,6 @@ PatientRecord Module2_RecordsSearch::getPatientRecord(const QString& cedula) {
     return rec;
 }
 
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 QVector<Paciente> Module2_RecordsSearch::getAllPacientes() const {
     return pacientes_;
 }

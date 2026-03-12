@@ -5,7 +5,6 @@
 #include "../algorithms/sorting/QuickSort.h"
 #include "../algorithms/searching/LinearSearch.h"
 #include "../algorithms/searching/BinarySearch.h"
-<<<<<<< HEAD
 #include "../utils/DataGenerator.h"
 #include <algorithm>
 #include <random>
@@ -74,53 +73,19 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
     QVector<BenchmarkResult> results;
     PerformanceMeter meter;
     bool slow = (dataSize > SLOW_ALGORITHM_THRESHOLD);
-=======
-#include <algorithm>
-#include <random>
-
-static std::mt19937& rng4() {
-    static std::mt19937 gen(std::random_device{}());
-    return gen;
-}
-
-Module4_PerformanceLab::Module4_PerformanceLab(QObject* parent)
-    : QObject(parent) {}
-
-QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
-    int dataSize,
-    const QStringList& algorithms,
-    const std::function<void(int)>& progressCb)
-{
-    QVector<int> base;
-    base.reserve(dataSize);
-    std::uniform_int_distribution<int> dist(0, 999999);
-    for (int i = 0; i < dataSize; ++i) base.push_back(dist(rng4()));
-
-    QVector<BenchmarkResult> results;
-    PerformanceMeter meter;
-    bool slow = (dataSize > 10000);
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     int total = algorithms.size();
     int done = 0;
 
     for (const QString& alg : algorithms) {
-<<<<<<< HEAD
         BenchmarkResult r{alg, dataSize, -1.0, dataType};
 
         if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
             r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ")";
-=======
-        BenchmarkResult r{alg, dataSize, -1.0, "int"};
-
-
-        if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
             results.push_back(r);
             if (progressCb) progressCb(++done * 100 / total);
             continue;
         }
 
-<<<<<<< HEAD
         QVector<T> copy = baseData;
         meter.start();
 
@@ -129,16 +94,6 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
         else if (alg == "Insertion Sort") insertionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
         else if (alg == "Quick Sort")     quickSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
         else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), comp);
-=======
-        QVector<int> copy = base;
-        meter.start();
-
-        if      (alg == "Bubble Sort")    bubbleSort<int>(copy);
-        else if (alg == "Selection Sort") selectionSort<int>(copy);
-        else if (alg == "Insertion Sort") insertionSort<int>(copy);
-        else if (alg == "Quick Sort")     quickSort<int>(copy);
-        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end());
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
         r.timeMs = meter.stop();
         results.push_back(r);
@@ -147,7 +102,6 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
     return results;
 }
 
-<<<<<<< HEAD
 QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
     const QVector<Paciente>& pacientes,
     const QVector<Consulta>& consultas,
@@ -259,26 +213,8 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
         double binaryMs = meter.stop() / trials;
         return {linearMs, binaryMs};
     }
-=======
-QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmark(int dataSize, const QStringList& algorithms) {
-    emit benchmarkStarted(dataSize);
-    QVector<BenchmarkResult> results = runBenchmarkBatch(
-        dataSize, algorithms,
-        [this](int p){ emit progressUpdated(p); });
-    appendToHistory(results);
-    emit benchmarkFinished(results);
-    return results;
-}
-
-QPair<double, double> Module4_PerformanceLab::compareSearchMethods(int dataSize) {
-    return PerformanceMeter::benchmarkSearchComparison(dataSize);
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 }
 
 void Module4_PerformanceLab::appendToHistory(const QVector<BenchmarkResult>& batch) {
     history_.push_back(batch);
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31

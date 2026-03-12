@@ -5,10 +5,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QTextEdit>
-<<<<<<< HEAD
 #include <QComboBox>
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 #include "../modules/Module3_DiagnosisTree.h"
 
 class DiagnosisTreeWidget : public QWidget {
@@ -17,13 +14,9 @@ public:
     explicit DiagnosisTreeWidget(QWidget* parent = nullptr);
 
 private slots:
-<<<<<<< HEAD
     void onSearchByName();
     void onSearchByCode();
     void onFilterBySpecialty();
-=======
-    void onSearch();
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     void onPreOrder();
     void onBFS();
     void onExpandAll();
@@ -39,15 +32,11 @@ private:
 
     QTreeWidget* treeWidget_ = nullptr;
     QLineEdit* searchEdit_ = nullptr;
-<<<<<<< HEAD
     QLineEdit* codeEdit_ = nullptr;
     QComboBox* cbSpecialty_ = nullptr;
     QPushButton* btnSearchName_ = nullptr;
     QPushButton* btnSearchCode_ = nullptr;
     QPushButton* btnFilterSpec_ = nullptr;
-=======
-    QPushButton* btnSearch_ = nullptr;
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     QPushButton* btnPreOrder_ = nullptr;
     QPushButton* btnBFS_ = nullptr;
     QPushButton* btnExpand_ = nullptr;

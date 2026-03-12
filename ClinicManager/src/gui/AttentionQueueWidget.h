@@ -14,10 +14,7 @@ public:
 
     int queueSize() const;
     void addSamplePatients(int count = 10);
-<<<<<<< HEAD
     Module1_AttentionQueue* module() { return module_; }
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
 signals:
     void queueSizeChanged(int newSize);
@@ -34,10 +31,7 @@ private:
     Module1_AttentionQueue* module_ = nullptr;
 
     QTableWidget* table_ = nullptr;
-<<<<<<< HEAD
     QTableWidget* historyTable_ = nullptr;
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     QPushButton* btnRegister_ = nullptr;
     QPushButton* btnAttend_ = nullptr;
     QLabel* lblAvgWait_ = nullptr;
@@ -46,8 +40,5 @@ private:
     QLabel* lblUrgente_ = nullptr;
     QLabel* lblNormal_ = nullptr;
     QLabel* lblTotal_ = nullptr;
-<<<<<<< HEAD
     QLabel* lblNext_ = nullptr;
-=======
->>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 };
