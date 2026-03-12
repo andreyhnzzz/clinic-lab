@@ -112,6 +112,7 @@ QVector<Diagnostico> DiagnosisTree::searchByName(const QString& query) const {
     return results;
 }
 
+<<<<<<< HEAD
 QVector<Diagnostico> DiagnosisTree::searchByCode(const QString& code) const {
     QVector<Diagnostico> results;
     QString lower = code.toLower();
@@ -168,6 +169,8 @@ QStringList DiagnosisTree::allSpecialties() const {
     return list;
 }
 
+=======
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 void DiagnosisTree::countHelper(DiagnosisNode* node, int& count) const {
     if (!node) return;
     count++;

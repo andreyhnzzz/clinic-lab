@@ -34,9 +34,12 @@ public:
     QVector<Diagnostico> preOrderTraversal() const;
     QVector<Diagnostico> bfsTraversal() const;
     QVector<Diagnostico> searchByName(const QString& query) const;
+<<<<<<< HEAD
     QVector<Diagnostico> searchByCode(const QString& code) const;
     QVector<Diagnostico> listBySpecialty(const QString& specialty) const;
     QStringList allSpecialties() const;
+=======
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 
     int totalNodes() const;
     int totalDiagnoses() const;

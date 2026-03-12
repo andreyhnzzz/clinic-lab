@@ -2,7 +2,10 @@
 #include <QObject>
 #include <QVector>
 #include <QString>
+<<<<<<< HEAD
 #include <QStringList>
+=======
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 #include "../data_structures/DiagnosisTree.h"
 #include "../models/Diagnostico.h"
 
@@ -15,9 +18,12 @@ public:
     const DiagnosisTree& getTree() const { return tree_; }
 
     QVector<Diagnostico> searchByName(const QString& query);
+<<<<<<< HEAD
     QVector<Diagnostico> searchByCode(const QString& code);
     QVector<Diagnostico> listBySpecialty(const QString& specialty);
     QStringList allSpecialties() const;
+=======
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     QVector<Diagnostico> preOrderTraversal();
     QVector<Diagnostico> bfsTraversal();
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <QVector>
 #include <functional>
+<<<<<<< HEAD
 #include <random>
 
 namespace detail {
@@ -24,6 +25,13 @@ int partition(QVector<T>& arr, int low, int high,
     if (high - low >= 3) {
         medianOfThree(arr, low, high, comp);
     }
+=======
+
+namespace detail {
+template<typename T>
+int partition(QVector<T>& arr, int low, int high,
+              std::function<bool(const T&, const T&)>& comp) {
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
     T pivot = arr[high];
     int i = low - 1;
     for (int j = low; j < high; ++j)
@@ -32,6 +40,7 @@ int partition(QVector<T>& arr, int low, int high,
     return i + 1;
 }
 
+<<<<<<< HEAD
 // Insertion sort for small subarrays (cutoff optimization)
 template<typename T>
 void insertionSortRange(QVector<T>& arr, int low, int high,
@@ -59,6 +68,16 @@ void quickSortHelper(QVector<T>& arr, int low, int high,
     int pi = partition(arr, low, high, comp);
     quickSortHelper(arr, low, pi - 1, comp);
     quickSortHelper(arr, pi + 1, high, comp);
+=======
+template<typename T>
+void quickSortHelper(QVector<T>& arr, int low, int high,
+                     std::function<bool(const T&, const T&)>& comp) {
+    if (low < high) {
+        int pi = partition(arr, low, high, comp);
+        quickSortHelper(arr, low, pi - 1, comp);
+        quickSortHelper(arr, pi + 1, high, comp);
+    }
+>>>>>>> 0b6db00e07b4a0712a21602b3913477cc7392e31
 }
 } // namespace detail
 
