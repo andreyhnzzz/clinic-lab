@@ -9,6 +9,8 @@ public:
 
 public slots:
     void refresh();
+    void setQueueSize(int size);
+    void setAuditStatus(const QString& status);
 
 private:
     void setupUI();

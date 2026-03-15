@@ -80,3 +80,11 @@ void DashboardWidget::refresh() {
     lblDiagnosticos_->setText(QString::number(diagCount));
     lblLastUpdate_->setText(QDateTime::currentDateTime().toString("hh:mm:ss"));
 }
+
+void DashboardWidget::setQueueSize(int size) {
+    lblEnCola_->setText(QString::number(size));
+}
+
+void DashboardWidget::setAuditStatus(const QString& status) {
+    lblAuditStatus_->setText(status);
+}

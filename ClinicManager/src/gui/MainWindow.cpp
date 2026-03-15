@@ -146,6 +146,8 @@ void MainWindow::setupUI() {
 
     connect(queueWidget_, &AttentionQueueWidget::queueSizeChanged,
             this, &MainWindow::updateStatusBar);
+    connect(queueWidget_, &AttentionQueueWidget::queueSizeChanged,
+            dashWidget_, &DashboardWidget::setQueueSize);
 }
 
 void MainWindow::switchModule(int index) {

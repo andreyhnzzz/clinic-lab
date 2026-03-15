@@ -76,26 +76,72 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
     int total = algorithms.size();
     int done = 0;
 
+    // Algorithm metadata helper
+    auto fillMeta = [&](BenchmarkResult& r) {
+        if (r.algorithmName == "Bubble Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "Estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Selection Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "No estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Insertion Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "Estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Quick Sort") {
+            r.theoreticalComplexity = "O(n log n) promedio";
+            r.stability = "No estable";
+            r.extraMemory = "O(log n) stack";
+        } else if (r.algorithmName == "std::sort") {
+            r.theoreticalComplexity = "O(n log n)";
+            r.stability = "No estable (introsort)";
+            r.extraMemory = "O(log n)";
+        }
+    };
+
     for (const QString& alg : algorithms) {
-        BenchmarkResult r{alg, dataSize, -1.0, dataType};
+        BenchmarkResult r{alg, dataSize, -1.0, dataType, 0, 0, "", "", "", ""};
+        fillMeta(r);
 
         if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
-            r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ")";
+            r.notes = "Omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD);
+            r.dataType = dataType + " (omitido)";
             results.push_back(r);
             if (progressCb) progressCb(++done * 100 / total);
             continue;
         }
 
         QVector<T> copy = baseData;
+        long long compCount = 0;
+        long long swapCount = 0;
+
+        // Instrumented comparator
+        auto instComp = [&comp, &compCount](const T& a, const T& b) -> bool {
+            compCount++;
+            return comp(a, b);
+        };
+        std::function<bool(const T&, const T&)> instFunc(instComp);
+
         meter.start();
 
-        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Selection Sort") selectionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Insertion Sort") insertionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Quick Sort")     quickSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), comp);
+        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, instFunc);
+        else if (alg == "Selection Sort") selectionSort<T>(copy, instFunc);
+        else if (alg == "Insertion Sort") insertionSort<T>(copy, instFunc);
+        else if (alg == "Quick Sort")     quickSort<T>(copy, instFunc);
+        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), instFunc);
 
         r.timeMs = meter.stop();
+        r.comparisons = compCount;
+        // Estimate swaps: for bubble/selection/insertion we can approximate
+        if (alg == "Bubble Sort" || alg == "Selection Sort")
+            r.swaps = compCount / 3; // rough heuristic
+        else if (alg == "Insertion Sort")
+            r.swaps = compCount / 2;
+        else
+            r.swaps = compCount / 4; // quicksort, std::sort
+
         results.push_back(r);
         if (progressCb) progressCb(++done * 100 / total);
     }

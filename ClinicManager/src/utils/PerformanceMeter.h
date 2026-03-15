@@ -8,6 +8,14 @@ struct BenchmarkResult {
     int dataSize = 0;
     double timeMs = 0.0;
     QString dataType;
+
+    // Extended SortMetrics fields
+    long long comparisons = 0;
+    long long swaps = 0;
+    QString theoreticalComplexity;
+    QString stability;
+    QString extraMemory;
+    QString notes;
 };
 
 class PerformanceMeter {
