@@ -20,6 +20,12 @@ public:
     QStringList allSpecialties() const;
     QVector<Diagnostico> preOrderTraversal();
     QVector<Diagnostico> bfsTraversal();
+    QVector<Diagnostico> postOrderTraversal();
+
+    // Full traversals including all nodes (areas, specialties, diagnoses)
+    QStringList fullPreOrderTraversal();
+    QStringList fullBfsTraversal();
+    QStringList fullPostOrderTraversal();
 
     int totalNodes() const;
     int totalDiagnoses() const;

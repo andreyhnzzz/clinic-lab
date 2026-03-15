@@ -19,6 +19,8 @@ private slots:
     void onFilterBySpecialty();
     void onPreOrder();
     void onBFS();
+    void onPostOrder();
+    void onFullTraversal();
     void onExpandAll();
     void onCollapseAll();
     void onItemSelected(QTreeWidgetItem* item, int column);
@@ -27,6 +29,7 @@ private:
     void setupUI();
     void populateTree();
     void showTraversalResults(const QVector<Diagnostico>& results, const QString& title);
+    void showFullTraversalResults(const QStringList& lines, const QString& title);
 
     Module3_DiagnosisTree* module_ = nullptr;
 
@@ -39,6 +42,8 @@ private:
     QPushButton* btnFilterSpec_ = nullptr;
     QPushButton* btnPreOrder_ = nullptr;
     QPushButton* btnBFS_ = nullptr;
+    QPushButton* btnPostOrder_ = nullptr;
+    QPushButton* btnFullTraversal_ = nullptr;
     QPushButton* btnExpand_ = nullptr;
     QPushButton* btnCollapse_ = nullptr;
     QTextEdit* detailPanel_ = nullptr;

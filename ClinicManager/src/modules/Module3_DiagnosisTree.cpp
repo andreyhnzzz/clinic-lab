@@ -27,6 +27,22 @@ QVector<Diagnostico> Module3_DiagnosisTree::bfsTraversal() {
     return tree_.bfsTraversal();
 }
 
+QVector<Diagnostico> Module3_DiagnosisTree::postOrderTraversal() {
+    return tree_.postOrderTraversal();
+}
+
+QStringList Module3_DiagnosisTree::fullPreOrderTraversal() {
+    return tree_.fullPreOrderTraversal();
+}
+
+QStringList Module3_DiagnosisTree::fullBfsTraversal() {
+    return tree_.fullBfsTraversal();
+}
+
+QStringList Module3_DiagnosisTree::fullPostOrderTraversal() {
+    return tree_.fullPostOrderTraversal();
+}
+
 int Module3_DiagnosisTree::totalNodes() const {
     return tree_.totalNodes();
 }

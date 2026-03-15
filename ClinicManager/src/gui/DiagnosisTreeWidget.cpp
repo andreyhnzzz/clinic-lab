@@ -60,9 +60,12 @@ void DiagnosisTreeWidget::setupUI() {
     auto* btnLayout = new QHBoxLayout();
     btnPreOrder_ = new QPushButton("Pre-Order");
     btnBFS_      = new QPushButton("BFS (Nivel)");
+    btnPostOrder_ = new QPushButton("Post-Order");
+    btnFullTraversal_ = new QPushButton("Recorrido Completo");
     btnExpand_   = new QPushButton("Expandir Todo");
     btnCollapse_ = new QPushButton("Colapsar Todo");
-    for (auto* b : {btnPreOrder_, btnBFS_, btnExpand_, btnCollapse_})
+    btnFullTraversal_->setToolTip("Muestra todos los nodos del arbol (areas, especialidades y diagnosticos)");
+    for (auto* b : {btnPreOrder_, btnBFS_, btnPostOrder_, btnFullTraversal_, btnExpand_, btnCollapse_})
         btnLayout->addWidget(b);
     btnLayout->addStretch();
     mainLayout->addLayout(btnLayout);
@@ -98,6 +101,8 @@ void DiagnosisTreeWidget::setupUI() {
     connect(btnFilterSpec_,  &QPushButton::clicked, this, &DiagnosisTreeWidget::onFilterBySpecialty);
     connect(btnPreOrder_,    &QPushButton::clicked, this, &DiagnosisTreeWidget::onPreOrder);
     connect(btnBFS_,         &QPushButton::clicked, this, &DiagnosisTreeWidget::onBFS);
+    connect(btnPostOrder_,   &QPushButton::clicked, this, &DiagnosisTreeWidget::onPostOrder);
+    connect(btnFullTraversal_, &QPushButton::clicked, this, &DiagnosisTreeWidget::onFullTraversal);
     connect(btnExpand_,      &QPushButton::clicked, this, &DiagnosisTreeWidget::onExpandAll);
     connect(btnCollapse_,    &QPushButton::clicked, this, &DiagnosisTreeWidget::onCollapseAll);
     connect(treeWidget_,     &QTreeWidget::itemClicked,
@@ -234,6 +239,50 @@ void DiagnosisTreeWidget::onPreOrder() {
 void DiagnosisTreeWidget::onBFS() {
     auto results = module_->bfsTraversal();
     showTraversalResults(results, "Recorrido BFS (Por Niveles)");
+}
+
+void DiagnosisTreeWidget::onPostOrder() {
+    auto results = module_->postOrderTraversal();
+    showTraversalResults(results, "Recorrido Post-Order");
+}
+
+void DiagnosisTreeWidget::onFullTraversal() {
+    QStringList preLines = module_->fullPreOrderTraversal();
+    QStringList bfsLines = module_->fullBfsTraversal();
+    QStringList postLines = module_->fullPostOrderTraversal();
+
+    QString text;
+    text += "<h3>Recorrido Completo del Arbol (todos los nodos)</h3>";
+    text += QString("<p>Nodos totales: <b>%1</b> | Diagnosticos finales: <b>%2</b></p><hr/>")
+        .arg(module_->totalNodes()).arg(module_->totalDiagnoses());
+
+    text += "<h4>Pre-Order (Raiz → Hijos):</h4><pre style='color:#E6EDF3;'>";
+    for (const auto& line : preLines)
+        text += line.toHtmlEscaped() + "\n";
+    text += "</pre><hr/>";
+
+    text += "<h4>BFS / Por Niveles:</h4><pre style='color:#E6EDF3;'>";
+    for (const auto& line : bfsLines)
+        text += line.toHtmlEscaped() + "\n";
+    text += "</pre><hr/>";
+
+    text += "<h4>Post-Order (Hijos → Raiz):</h4><pre style='color:#E6EDF3;'>";
+    for (const auto& line : postLines)
+        text += line.toHtmlEscaped() + "\n";
+    text += "</pre>";
+
+    detailPanel_->setHtml(text);
+}
+
+void DiagnosisTreeWidget::showFullTraversalResults(const QStringList& lines, const QString& title) {
+    QString text;
+    text += QString("<h3>%1</h3>").arg(title);
+    text += QString("<p>Total nodos visitados: <b>%1</b></p><hr/>").arg(lines.size());
+    text += "<pre style='color:#E6EDF3; font-size: 12px;'>";
+    for (const auto& line : lines)
+        text += line.toHtmlEscaped() + "\n";
+    text += "</pre>";
+    detailPanel_->setHtml(text);
 }
 
 void DiagnosisTreeWidget::onExpandAll() {
