@@ -55,8 +55,12 @@ PerformanceLabWidget::PerformanceLabWidget(QWidget* parent)
             }
             runningFullSeries_ = false;
             lblStatus_->setText("Serie completa finalizada.");
+            emit benchmarkCompleted("Serie completa");
         } else {
             lblStatus_->setText("Benchmark completado.");
+            if (!results.isEmpty()) {
+                emit benchmarkCompleted(QString("n=%1").arg(results[0].dataSize));
+            }
         }
         btnRun_->setEnabled(true);
         btnRunSeries_->setEnabled(true);

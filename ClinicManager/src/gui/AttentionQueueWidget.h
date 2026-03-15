@@ -19,6 +19,7 @@ public:
 
 signals:
     void queueSizeChanged(int newSize);
+    void nextPatientChanged(const QString& info);
 
 private slots:
     void onRegisterPatient();

@@ -22,6 +22,9 @@ class PerformanceLabWidget : public QWidget {
 public:
     explicit PerformanceLabWidget(QWidget* parent = nullptr);
 
+signals:
+    void benchmarkCompleted(const QString& summary);
+
 private slots:
     void onRunBenchmark();
     void onRunFullSeries();

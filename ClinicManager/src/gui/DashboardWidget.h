@@ -11,6 +11,8 @@ public slots:
     void refresh();
     void setQueueSize(int size);
     void setAuditStatus(const QString& status);
+    void setNextPatient(const QString& info);
+    void setLastBenchmark(const QString& info);
 
 private:
     void setupUI();
@@ -18,7 +20,9 @@ private:
     QLabel* lblTotalPacientes_ = nullptr;
     QLabel* lblTotalConsultas_ = nullptr;
     QLabel* lblEnCola_ = nullptr;
+    QLabel* lblProximaAtencion_ = nullptr;
     QLabel* lblDiagnosticos_ = nullptr;
+    QLabel* lblLastBenchmark_ = nullptr;
     QLabel* lblAuditStatus_ = nullptr;
     QLabel* lblLastUpdate_ = nullptr;
 };

@@ -63,9 +63,11 @@ void DashboardWidget::setupUI() {
     kpiGrid->addWidget(makeKpiCard("TOTAL PACIENTES", "0", "#1DBF73", lblTotalPacientes_), 0, 0);
     kpiGrid->addWidget(makeKpiCard("TOTAL CONSULTAS", "0", "#3AA0FF", lblTotalConsultas_), 0, 1);
     kpiGrid->addWidget(makeKpiCard("PACIENTES EN COLA", "0", "#F59E0B", lblEnCola_), 0, 2);
+    kpiGrid->addWidget(makeKpiCard("PROXIMA ATENCION", "--", "#E879F9", lblProximaAtencion_), 0, 3);
     kpiGrid->addWidget(makeKpiCard("DIAGNOSTICOS CARGADOS", "0", "#4FD1C5", lblDiagnosticos_), 1, 0);
-    kpiGrid->addWidget(makeKpiCard("ESTADO AUDITORIA", "--", "#38BDF8", lblAuditStatus_), 1, 1);
-    kpiGrid->addWidget(makeKpiCard("ULTIMA ACTUALIZACION", "--", "#A7B1BC", lblLastUpdate_), 1, 2);
+    kpiGrid->addWidget(makeKpiCard("ULTIMO BENCHMARK", "--", "#FB923C", lblLastBenchmark_), 1, 1);
+    kpiGrid->addWidget(makeKpiCard("ESTADO AUDITORIA", "--", "#38BDF8", lblAuditStatus_), 1, 2);
+    kpiGrid->addWidget(makeKpiCard("ULTIMA ACTUALIZACION", "--", "#A7B1BC", lblLastUpdate_), 1, 3);
 
     mainLayout->addLayout(kpiGrid);
     mainLayout->addStretch();
@@ -87,4 +89,12 @@ void DashboardWidget::setQueueSize(int size) {
 
 void DashboardWidget::setAuditStatus(const QString& status) {
     lblAuditStatus_->setText(status);
+}
+
+void DashboardWidget::setNextPatient(const QString& info) {
+    lblProximaAtencion_->setText(info.isEmpty() ? "--" : info);
+}
+
+void DashboardWidget::setLastBenchmark(const QString& info) {
+    lblLastBenchmark_->setText(info.isEmpty() ? "--" : info);
 }
