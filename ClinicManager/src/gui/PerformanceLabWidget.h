@@ -21,6 +21,7 @@ class PerformanceLabWidget : public QWidget {
     Q_OBJECT
 public:
     explicit PerformanceLabWidget(QWidget* parent = nullptr);
+    ~PerformanceLabWidget() override;
 
 signals:
     void benchmarkCompleted(const QString& summary);
@@ -40,6 +41,7 @@ private:
     int getCurrentDataSize() const;
     QString getDatasetType() const;
     QString getSortField() const;
+    void cancelRunningWork();
 
     Module4_PerformanceLab* module_ = nullptr;
 
@@ -69,6 +71,7 @@ private:
     QLabel* lblAnalysis_ = nullptr;
 
     QFutureWatcher<QVector<BenchmarkResult>>* watcher_ = nullptr;
+    QFuture<QVector<BenchmarkResult>> currentFuture_;
     bool runningFullSeries_ = false;
     int fullSeriesIndex_ = 0;
 };

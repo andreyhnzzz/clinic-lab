@@ -9,6 +9,8 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QMap>
+#include <QPointer>
+#include <QApplication>
 #include <QtConcurrent/QtConcurrent>
 
 // Matches the threshold in Module4_PerformanceLab.cpp
@@ -20,53 +22,81 @@ PerformanceLabWidget::PerformanceLabWidget(QWidget* parent)
     watcher_ = new QFutureWatcher<QVector<BenchmarkResult>>(this);
     setupUI();
 
-    connect(watcher_, &QFutureWatcher<QVector<BenchmarkResult>>::finished, this, [this](){
-        auto results = watcher_->result();
-        module_->appendToHistory(results);
-        updateBarChart(results);
-        updateGrowthChart(module_->getHistory());
-        addResultsToTable(results);
-        progressBar_->setValue(100);
+    QPointer<PerformanceLabWidget> self(this);
+    connect(watcher_, &QFutureWatcher<QVector<BenchmarkResult>>::finished, this, [self]() {
+        if (!self) return;
+
+        auto results = self->watcher_->result();
+        self->module_->appendToHistory(results);
+        self->updateBarChart(results);
+        self->updateGrowthChart(self->module_->getHistory());
+        self->addResultsToTable(results);
+        self->progressBar_->setValue(100);
 
         // If running full series, continue with next size
-        if (runningFullSeries_) {
+        if (self->runningFullSeries_) {
             static const int series[] = {500, 5000, 50000, 200000};
-            fullSeriesIndex_++;
-            if (fullSeriesIndex_ < 4) {
-                lblStatus_->setText(QString("Serie completa: ejecutando n=%1...").arg(series[fullSeriesIndex_]));
+            self->fullSeriesIndex_++;
+            if (self->fullSeriesIndex_ < 4) {
+                self->lblStatus_->setText(QString("Serie completa: ejecutando n=%1...").arg(series[self->fullSeriesIndex_]));
                 auto& store = ClinicDataStore::instance();
                 QVector<Paciente> pacs = store.pacientes();
                 QVector<Consulta> cons = store.consultas();
-                QString dsType = getDatasetType();
-                QString field = getSortField();
-                QStringList algs = getSelectedAlgorithms();
-                int sz = series[fullSeriesIndex_];
-                auto future = QtConcurrent::run([pacs, cons, dsType, field, sz, algs, this]() {
+                QString dsType = self->getDatasetType();
+                QString field = self->getSortField();
+                QStringList algs = self->getSelectedAlgorithms();
+                int sz = series[self->fullSeriesIndex_];
+
+                QPointer<PerformanceLabWidget> safeSelf(self.data());
+                auto future = QtConcurrent::run([pacs, cons, dsType, field, sz, algs, safeSelf]() {
                     return Module4_PerformanceLab::runBenchmarkBatch(
                         pacs, cons, dsType, field, sz, algs,
-                        [this](int p){
-                            QMetaObject::invokeMethod(this, [this, p](){
-                                progressBar_->setValue(p);
+                        [safeSelf](int p) {
+                            if (!safeSelf) return;
+                            QMetaObject::invokeMethod(safeSelf.data(), [safeSelf, p]() {
+                                if (!safeSelf) return;
+                                safeSelf->progressBar_->setValue(p);
                             }, Qt::QueuedConnection);
                         });
                 });
-                watcher_->setFuture(future);
+
+                self->currentFuture_ = future;
+                self->watcher_->setFuture(self->currentFuture_);
                 return;
             }
-            runningFullSeries_ = false;
-            lblStatus_->setText("Serie completa finalizada.");
-            emit benchmarkCompleted("Serie completa");
+            self->runningFullSeries_ = false;
+            self->lblStatus_->setText("Serie completa finalizada.");
+            emit self->benchmarkCompleted("Serie completa");
         } else {
-            lblStatus_->setText("Benchmark completado.");
+            self->lblStatus_->setText("Benchmark completado.");
             if (!results.isEmpty()) {
-                emit benchmarkCompleted(QString("n=%1").arg(results[0].dataSize));
+                emit self->benchmarkCompleted(QString("n=%1").arg(results[0].dataSize));
             }
         }
-        btnRun_->setEnabled(true);
-        btnRunSeries_->setEnabled(true);
-        btnClear_->setEnabled(true);
-        btnSearchComp_->setEnabled(true);
+        self->btnRun_->setEnabled(true);
+        self->btnRunSeries_->setEnabled(true);
+        self->btnClear_->setEnabled(true);
+        self->btnSearchComp_->setEnabled(true);
     });
+
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        cancelRunningWork();
+    });
+}
+
+PerformanceLabWidget::~PerformanceLabWidget() {
+    cancelRunningWork();
+}
+
+void PerformanceLabWidget::cancelRunningWork() {
+    runningFullSeries_ = false;
+    fullSeriesIndex_ = 0;
+
+    if (!watcher_) return;
+    if (watcher_->isRunning()) {
+        watcher_->cancel();
+        watcher_->waitForFinished();
+    }
 }
 
 void PerformanceLabWidget::setupUI() {
@@ -289,16 +319,20 @@ void PerformanceLabWidget::onRunBenchmark() {
     lblStatus_->setText(QString("Ejecutando benchmark: %1/%2, n=%3...")
         .arg(dsType).arg(field).arg(dataSize));
 
-    auto future = QtConcurrent::run([pacs, cons, dsType, field, dataSize, selectedAlgs, this]() {
+    QPointer<PerformanceLabWidget> self(this);
+    auto future = QtConcurrent::run([pacs, cons, dsType, field, dataSize, selectedAlgs, self]() {
         return Module4_PerformanceLab::runBenchmarkBatch(
             pacs, cons, dsType, field, dataSize, selectedAlgs,
-            [this](int p){
-                QMetaObject::invokeMethod(this, [this, p](){
-                    progressBar_->setValue(p);
+            [self](int p) {
+                if (!self) return;
+                QMetaObject::invokeMethod(self.data(), [self, p]() {
+                    if (!self) return;
+                    self->progressBar_->setValue(p);
                 }, Qt::QueuedConnection);
             });
     });
-    watcher_->setFuture(future);
+    currentFuture_ = future;
+    watcher_->setFuture(currentFuture_);
 }
 
 void PerformanceLabWidget::onRunFullSeries() {
@@ -328,16 +362,20 @@ void PerformanceLabWidget::onRunFullSeries() {
     lblStatus_->setText(QString("Serie completa: ejecutando n=%1...").arg(sz));
     progressBar_->setValue(0);
 
-    auto future = QtConcurrent::run([pacs, cons, dsType, field, sz, selectedAlgs, this]() {
+    QPointer<PerformanceLabWidget> self(this);
+    auto future = QtConcurrent::run([pacs, cons, dsType, field, sz, selectedAlgs, self]() {
         return Module4_PerformanceLab::runBenchmarkBatch(
             pacs, cons, dsType, field, sz, selectedAlgs,
-            [this](int p){
-                QMetaObject::invokeMethod(this, [this, p](){
-                    progressBar_->setValue(p);
+            [self](int p) {
+                if (!self) return;
+                QMetaObject::invokeMethod(self.data(), [self, p]() {
+                    if (!self) return;
+                    self->progressBar_->setValue(p);
                 }, Qt::QueuedConnection);
             });
     });
-    watcher_->setFuture(future);
+    currentFuture_ = future;
+    watcher_->setFuture(currentFuture_);
 }
 
 void PerformanceLabWidget::updateBarChart(const QVector<BenchmarkResult>& results) {
