@@ -159,10 +159,13 @@ QVector<Consulta> DataGenerator::generateConsultas(const QVector<Paciente>& paci
     consultas.reserve(count);
     if (pacientes.isEmpty()) return consultas;
 
+    // Globally incrementing counter to guarantee unique IDs across multiple
+    // generateConsultas calls (e.g., when benchmark generates extra records).
     static std::atomic<int> nextConsId{1};
     for (int i = 0; i < count; ++i) {
         Consulta c;
         int id = nextConsId.fetch_add(1);
+        // 8 digits to accommodate large benchmark datasets (up to ~99 million)
         c.idConsulta = QString("CONS-%1").arg(id, 8, 10, QChar('0')).toStdString();
         const Paciente& p = pacientes[randInt(0, pacientes.size() - 1)];
         c.cedulaPaciente = p.cedula;

@@ -5,7 +5,8 @@
 
 namespace detail {
 
-// Median-of-three pivot selection to avoid worst-case on sorted/reverse input
+// Median-of-three pivot selection to avoid worst-case on sorted/reverse input.
+// Swaps here are real data movements that contribute to sorting correctness.
 template<typename T>
 int medianOfThree(QVector<T>& arr, int low, int high,
                   std::function<bool(const T&, const T&)>& comp,
