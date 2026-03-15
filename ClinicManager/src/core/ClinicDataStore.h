@@ -13,6 +13,12 @@ class ClinicDataStore : public QObject {
 public:
     static ClinicDataStore& instance();
 
+    // Threading model:
+    // - All mutations are confined to the object's owner thread (UI thread).
+    // - If a mutation is requested from another thread, it is marshalled
+    //   synchronously to the owner thread.
+    // - Read APIs are expected to be called from the owner thread.
+
     // --- Patients ---
     void addPaciente(const Paciente& p);
     void loadPacientes(const QVector<Paciente>& list);
@@ -42,6 +48,8 @@ signals:
 private:
     explicit ClinicDataStore(QObject* parent = nullptr);
     void rebuildIndices();
+    bool isOwnerThread() const;
+    void assertOwnerThread(const char* funcName) const;
 
     QVector<Paciente> pacientes_;
     QVector<Consulta> consultas_;

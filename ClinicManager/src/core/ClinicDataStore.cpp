@@ -1,6 +1,9 @@
 #include "ClinicDataStore.h"
 #include "../utils/DataGenerator.h"
 #include <algorithm>
+#include <QMetaObject>
+#include <QThread>
+#include <QtGlobal>
 
 ClinicDataStore& ClinicDataStore::instance() {
     static ClinicDataStore store;
@@ -10,7 +13,22 @@ ClinicDataStore& ClinicDataStore::instance() {
 ClinicDataStore::ClinicDataStore(QObject* parent)
     : QObject(parent) {}
 
+bool ClinicDataStore::isOwnerThread() const {
+    return QThread::currentThread() == thread();
+}
+
+void ClinicDataStore::assertOwnerThread(const char* funcName) const {
+    Q_ASSERT_X(isOwnerThread(), funcName,
+               "ClinicDataStore must be accessed from its owner/UI thread.");
+}
+
 void ClinicDataStore::addPaciente(const Paciente& p) {
+    if (!isOwnerThread()) {
+        QMetaObject::invokeMethod(this, [this, p]() { addPaciente(p); },
+                                  Qt::BlockingQueuedConnection);
+        return;
+    }
+
     if (containsCedula(QString::fromStdString(p.cedula))) return;
     int idx = pacientes_.size();
     pacientes_.push_back(p);
@@ -19,6 +37,12 @@ void ClinicDataStore::addPaciente(const Paciente& p) {
 }
 
 void ClinicDataStore::loadPacientes(const QVector<Paciente>& list) {
+    if (!isOwnerThread()) {
+        QMetaObject::invokeMethod(this, [this, list]() { loadPacientes(list); },
+                                  Qt::BlockingQueuedConnection);
+        return;
+    }
+
     pacientes_.clear();
     cedulaIndex_.clear();
     for (const auto& p : list) {
@@ -31,6 +55,7 @@ void ClinicDataStore::loadPacientes(const QVector<Paciente>& list) {
 }
 
 Paciente ClinicDataStore::findByCedula(const QString& cedula) const {
+    assertOwnerThread(Q_FUNC_INFO);
     auto opt = cedulaIndex_.find(cedula.toStdString());
     if (opt && *opt >= 0 && *opt < pacientes_.size())
         return pacientes_[*opt];
@@ -38,10 +63,17 @@ Paciente ClinicDataStore::findByCedula(const QString& cedula) const {
 }
 
 bool ClinicDataStore::containsCedula(const QString& cedula) const {
+    assertOwnerThread(Q_FUNC_INFO);
     return cedulaIndex_.contains(cedula.toStdString());
 }
 
 void ClinicDataStore::addConsulta(const Consulta& c) {
+    if (!isOwnerThread()) {
+        QMetaObject::invokeMethod(this, [this, c]() { addConsulta(c); },
+                                  Qt::BlockingQueuedConnection);
+        return;
+    }
+
     int idx = consultas_.size();
     consultas_.push_back(c);
     consultasByPatient_[c.cedulaPaciente].push_back(idx);
@@ -49,6 +81,12 @@ void ClinicDataStore::addConsulta(const Consulta& c) {
 }
 
 void ClinicDataStore::loadConsultas(const QVector<Consulta>& list) {
+    if (!isOwnerThread()) {
+        QMetaObject::invokeMethod(this, [this, list]() { loadConsultas(list); },
+                                  Qt::BlockingQueuedConnection);
+        return;
+    }
+
     consultas_ = list;
     std::sort(consultas_.begin(), consultas_.end(),
               [](const Consulta& a, const Consulta& b){ return a.fecha < b.fecha; });
@@ -59,6 +97,7 @@ void ClinicDataStore::loadConsultas(const QVector<Consulta>& list) {
 }
 
 QVector<Consulta> ClinicDataStore::consultasPorPaciente(const QString& cedula) const {
+    assertOwnerThread(Q_FUNC_INFO);
     QVector<Consulta> result;
     auto it = consultasByPatient_.find(cedula.toStdString());
     if (it != consultasByPatient_.end()) {
@@ -78,6 +117,12 @@ void ClinicDataStore::generateSampleData(int numPacientes) {
 }
 
 void ClinicDataStore::clear() {
+    if (!isOwnerThread()) {
+        QMetaObject::invokeMethod(this, [this]() { clear(); },
+                                  Qt::BlockingQueuedConnection);
+        return;
+    }
+
     pacientes_.clear();
     consultas_.clear();
     cedulaIndex_.clear();
