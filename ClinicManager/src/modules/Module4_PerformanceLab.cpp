@@ -134,13 +134,15 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
 
         r.timeMs = meter.stop();
         r.comparisons = compCount;
-        // Estimate swaps: for bubble/selection/insertion we can approximate
+        // Swap counts are estimates based on algorithm characteristics
+        // (actual swap instrumentation would require modifying sort internals)
         if (alg == "Bubble Sort" || alg == "Selection Sort")
-            r.swaps = compCount / 3; // rough heuristic
+            r.swaps = compCount / 3;
         else if (alg == "Insertion Sort")
             r.swaps = compCount / 2;
         else
-            r.swaps = compCount / 4; // quicksort, std::sort
+            r.swaps = compCount / 4;
+        r.notes = "Swaps: estimado";
 
         results.push_back(r);
         if (progressCb) progressCb(++done * 100 / total);

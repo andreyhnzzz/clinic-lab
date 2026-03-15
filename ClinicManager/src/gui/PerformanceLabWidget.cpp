@@ -11,6 +11,9 @@
 #include <QMap>
 #include <QtConcurrent/QtConcurrent>
 
+// Matches the threshold in Module4_PerformanceLab.cpp
+static constexpr int SLOW_ALGORITHM_THRESHOLD = 10000;
+
 PerformanceLabWidget::PerformanceLabWidget(QWidget* parent)
     : QWidget(parent) {
     module_ = new Module4_PerformanceLab(this);
@@ -521,7 +524,7 @@ void PerformanceLabWidget::generateAnalysis() {
 
     // O(n^2) viability
     analysis += "<br><b>Algoritmos O(n^2):</b> Bubble Sort, Selection Sort e Insertion Sort ";
-    analysis += "dejan de ser viables para n&gt;" + QString::number(10000) + ". ";
+    analysis += "dejan de ser viables para n&gt;" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ". ";
     analysis += "Insertion Sort es el mejor de los tres para datos parcialmente ordenados.<br>";
 
     // Binary search analysis

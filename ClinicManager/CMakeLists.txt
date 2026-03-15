@@ -84,3 +84,14 @@ target_link_libraries(ClinicManager PRIVATE
 target_include_directories(ClinicManager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# Windows deployment: install target for windeployqt
+if(WIN32)
+    install(TARGETS ClinicManager
+        RUNTIME DESTINATION bin
+    )
+    # Set WIN32_EXECUTABLE to avoid console window on Windows Release
+    set_target_properties(ClinicManager PROPERTIES
+        WIN32_EXECUTABLE $<CONFIG:Release>
+    )
+endif()

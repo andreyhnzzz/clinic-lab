@@ -329,7 +329,8 @@ void AttentionQueueWidget::onAttendNext() {
         c.idConsulta = ("CONS-" + QDateTime::currentDateTime().toString("yyyyMMddHHmmsszzz")).toStdString();
         c.cedulaPaciente = p.cedula;
         c.fecha = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
-        c.medicoTratante = "Medico de turno";
+        static const char* DEFAULT_MEDICO = "Medico de turno";
+        c.medicoTratante = DEFAULT_MEDICO;
         c.diagnostico = edDiag->text().isEmpty() ? p.diagnostico : edDiag->text().toStdString();
         c.gravedad = cbGravedad->currentIndex() + 1;
         c.costo = spCosto->value();

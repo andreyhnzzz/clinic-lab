@@ -78,7 +78,7 @@ void DashboardWidget::refresh() {
 
     int diagCount = store.diagnosisTree().totalNodes();
     lblDiagnosticos_->setText(QString::number(diagCount));
-    lblLastUpdate_->setText(QDateTime::currentDateTime().toString("hh:mm:ss"));
+    lblLastUpdate_->setText(QDateTime::currentDateTime().toString("dd/MM hh:mm:ss"));
 }
 
 void DashboardWidget::setQueueSize(int size) {
