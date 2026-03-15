@@ -32,6 +32,7 @@ private:
     void updateBarChart(const QVector<BenchmarkResult>& results);
     void updateGrowthChart(const QVector<QVector<BenchmarkResult>>& history);
     void addResultsToTable(const QVector<BenchmarkResult>& results);
+    void generateAnalysis();
     QStringList getSelectedAlgorithms() const;
     int getCurrentDataSize() const;
     QString getDatasetType() const;
@@ -61,6 +62,7 @@ private:
     QLabel* lblLinearTime_ = nullptr;
     QLabel* lblBinaryTime_ = nullptr;
     QPushButton* btnSearchComp_ = nullptr;
+    QLabel* lblAnalysis_ = nullptr;
 
     QFutureWatcher<QVector<BenchmarkResult>>* watcher_ = nullptr;
     bool runningFullSeries_ = false;

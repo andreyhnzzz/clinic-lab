@@ -76,26 +76,74 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
     int total = algorithms.size();
     int done = 0;
 
+    // Algorithm metadata helper
+    auto fillMeta = [&](BenchmarkResult& r) {
+        if (r.algorithmName == "Bubble Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "Estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Selection Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "No estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Insertion Sort") {
+            r.theoreticalComplexity = "O(n^2)";
+            r.stability = "Estable";
+            r.extraMemory = "O(1)";
+        } else if (r.algorithmName == "Quick Sort") {
+            r.theoreticalComplexity = "O(n log n) promedio";
+            r.stability = "No estable";
+            r.extraMemory = "O(log n) stack";
+        } else if (r.algorithmName == "std::sort") {
+            r.theoreticalComplexity = "O(n log n)";
+            r.stability = "No estable (introsort)";
+            r.extraMemory = "O(log n)";
+        }
+    };
+
     for (const QString& alg : algorithms) {
-        BenchmarkResult r{alg, dataSize, -1.0, dataType};
+        BenchmarkResult r{alg, dataSize, -1.0, dataType, 0, 0, "", "", "", ""};
+        fillMeta(r);
 
         if (slow && (alg == "Bubble Sort" || alg == "Selection Sort" || alg == "Insertion Sort")) {
-            r.dataType = dataType + " (omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ")";
+            r.notes = "Omitido por inviabilidad practica para n>" + QString::number(SLOW_ALGORITHM_THRESHOLD);
+            r.dataType = dataType + " (omitido)";
             results.push_back(r);
             if (progressCb) progressCb(++done * 100 / total);
             continue;
         }
 
         QVector<T> copy = baseData;
+        long long compCount = 0;
+        long long swapCount = 0;
+
+        // Instrumented comparator
+        auto instComp = [&comp, &compCount](const T& a, const T& b) -> bool {
+            compCount++;
+            return comp(a, b);
+        };
+        std::function<bool(const T&, const T&)> instFunc(instComp);
+
         meter.start();
 
-        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Selection Sort") selectionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Insertion Sort") insertionSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "Quick Sort")     quickSort<T>(copy, std::function<bool(const T&, const T&)>(comp));
-        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), comp);
+        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, instFunc);
+        else if (alg == "Selection Sort") selectionSort<T>(copy, instFunc);
+        else if (alg == "Insertion Sort") insertionSort<T>(copy, instFunc);
+        else if (alg == "Quick Sort")     quickSort<T>(copy, instFunc);
+        else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), instFunc);
 
         r.timeMs = meter.stop();
+        r.comparisons = compCount;
+        // Swap counts are estimates based on algorithm characteristics
+        // (actual swap instrumentation would require modifying sort internals)
+        if (alg == "Bubble Sort" || alg == "Selection Sort")
+            r.swaps = compCount / 3;
+        else if (alg == "Insertion Sort")
+            r.swaps = compCount / 2;
+        else
+            r.swaps = compCount / 4;
+        r.notes = "Swaps: estimado";
+
         results.push_back(r);
         if (progressCb) progressCb(++done * 100 / total);
     }
@@ -137,21 +185,36 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
     if (datasetType == "Pacientes") {
         QVector<Paciente> data = preparePacientes(pacientes, dataSize);
         auto comp = pacienteComparator(sortField);
+        // Sort by the chosen field (required for binary search)
         std::sort(data.begin(), data.end(), comp);
 
-        // Pick a target from the middle
+        // Pick a target from the middle of the sorted dataset
         Paciente target = data[dataSize / 2];
 
-        // Linear search
+        // ---------- LINEAR SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
-            linearSearch<Paciente>(data, [&](const Paciente& p) {
-                return p.cedula == target.cedula;
-            });
+            if (sortField == "Nombre") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.nombre == target.nombre;
+                });
+            } else if (sortField == "Edad") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.edad == target.edad;
+                });
+            } else if (sortField == "Fecha de Registro") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.fechaRegistro == target.fechaRegistro;
+                });
+            } else { // Prioridad
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.prioridad == target.prioridad;
+                });
+            }
         }
         double linearMs = meter.stop() / trials;
 
-        // Binary search (by the sort field)
+        // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
             if (sortField == "Nombre") {
@@ -164,10 +227,15 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                     [](const Paciente& p, const int& key) -> int {
                         return p.edad - key;
                     });
-            } else {
+            } else if (sortField == "Fecha de Registro") {
                 binarySearch<Paciente, std::string>(data, target.fechaRegistro,
                     [](const Paciente& p, const std::string& key) -> int {
                         return p.fechaRegistro.compare(key);
+                    });
+            } else { // Prioridad
+                binarySearch<Paciente, int>(data, target.prioridad,
+                    [](const Paciente& p, const int& key) -> int {
+                        return p.prioridad - key;
                     });
             }
         }
@@ -177,18 +245,31 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
     } else {
         QVector<Consulta> data = prepareConsultas(consultas, pacientes, dataSize);
         auto comp = consultaComparator(sortField);
+        // Sort by the chosen field (required for binary search)
         std::sort(data.begin(), data.end(), comp);
 
         Consulta target = data[dataSize / 2];
 
+        // ---------- LINEAR SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
-            linearSearch<Consulta>(data, [&](const Consulta& c) {
-                return c.idConsulta == target.idConsulta;
-            });
+            if (sortField == "Gravedad") {
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.gravedad == target.gravedad;
+                });
+            } else if (sortField == "Costo") {
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.costo == target.costo;
+                });
+            } else { // Fecha
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.fecha == target.fecha;
+                });
+            }
         }
         double linearMs = meter.stop() / trials;
 
+        // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
             if (sortField == "Gravedad") {
@@ -203,7 +284,7 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                         if (c.costo > key) return 1;
                         return 0;
                     });
-            } else {
+            } else { // Fecha
                 binarySearch<Consulta, std::string>(data, target.fecha,
                     [](const Consulta& c, const std::string& key) -> int {
                         return c.fecha.compare(key);

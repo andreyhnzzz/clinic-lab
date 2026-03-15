@@ -2,6 +2,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 static std::mt19937& rng() {
     static std::mt19937 gen(std::random_device{}());
@@ -129,9 +130,16 @@ QString DataGenerator::randomMedico() {
 QVector<Paciente> DataGenerator::generatePacientes(int count) {
     QVector<Paciente> pacientes;
     pacientes.reserve(count);
+    std::set<std::string> usedCedulas;
     for (int i = 0; i < count; ++i) {
         Paciente p;
-        p.cedula = generateCedula().toStdString();
+        // Guarantee unique cedulas
+        std::string ced;
+        do {
+            ced = generateCedula().toStdString();
+        } while (usedCedulas.count(ced));
+        usedCedulas.insert(ced);
+        p.cedula = ced;
         p.nombre = randomCostaRicanName().toStdString();
         p.edad = randInt(1, 90);
         p.fechaRegistro = randomDate().toStdString();

@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QGroupBox>
+#include <QTimer>
 #include "../modules/Module1_AttentionQueue.h"
 
 class AttentionQueueWidget : public QWidget {
@@ -23,12 +24,14 @@ private slots:
     void onRegisterPatient();
     void onAttendNext();
     void refreshTable();
+    void refreshWaitMetrics();
 
 private:
     void setupUI();
     void applyRowColor(int row, int priority);
 
     Module1_AttentionQueue* module_ = nullptr;
+    QTimer* waitTimer_ = nullptr;
 
     QTableWidget* table_ = nullptr;
     QTableWidget* historyTable_ = nullptr;

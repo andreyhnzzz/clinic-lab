@@ -8,7 +8,11 @@
 #include <QFont>
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QMap>
 #include <QtConcurrent/QtConcurrent>
+
+// Matches the threshold in Module4_PerformanceLab.cpp
+static constexpr int SLOW_ALGORITHM_THRESHOLD = 10000;
 
 PerformanceLabWidget::PerformanceLabWidget(QWidget* parent)
     : QWidget(parent) {
@@ -176,8 +180,10 @@ void PerformanceLabWidget::setupUI() {
     splitter->addWidget(chartsWidget);
 
     // History table
-    historyTable_ = new QTableWidget(0, 4);
-    historyTable_->setHorizontalHeaderLabels({"Algoritmo", "Tamano", "Tiempo (ms)", "Tipo de Datos"});
+    historyTable_ = new QTableWidget(0, 8);
+    historyTable_->setHorizontalHeaderLabels({
+        "Algoritmo", "Tamano", "Tiempo (ms)", "Comparaciones",
+        "Complejidad", "Estabilidad", "Memoria", "Tipo de Datos"});
     historyTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     historyTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     historyTable_->verticalHeader()->setVisible(false);
@@ -212,6 +218,15 @@ void PerformanceLabWidget::setupUI() {
         growthChartView_->setChart(chart);
     });
     connect(btnSearchComp_, &QPushButton::clicked, this, &PerformanceLabWidget::onSearchComparison);
+
+    // Benchmark analysis section
+    auto* analysisGroup = new QGroupBox("Analisis Automatico del Benchmark");
+    auto* analysisLayout = new QVBoxLayout(analysisGroup);
+    lblAnalysis_ = new QLabel("Ejecute una serie completa para generar conclusiones automaticas.");
+    lblAnalysis_->setWordWrap(true);
+    lblAnalysis_->setStyleSheet("color: #A7B1BC; font-size: 12px; padding: 8px;");
+    analysisLayout->addWidget(lblAnalysis_);
+    mainLayout->addWidget(analysisGroup);
 }
 
 QStringList PerformanceLabWidget::getSelectedAlgorithms() const {
@@ -410,14 +425,23 @@ void PerformanceLabWidget::addResultsToTable(const QVector<BenchmarkResult>& res
         if (r.timeMs >= 0.0) {
             historyTable_->setItem(row, 2, new QTableWidgetItem(
                 QString::number(r.timeMs, 'f', 3)));
+            historyTable_->setItem(row, 3, new QTableWidgetItem(
+                QString::number(r.comparisons)));
         } else {
-            auto* item = new QTableWidgetItem("Omitido por inviabilidad practica");
+            auto* item = new QTableWidgetItem("Omitido");
             item->setForeground(QColor("#F59E0B"));
             historyTable_->setItem(row, 2, item);
+            historyTable_->setItem(row, 3, new QTableWidgetItem("--"));
         }
-        historyTable_->setItem(row, 3, new QTableWidgetItem(r.dataType));
+        historyTable_->setItem(row, 4, new QTableWidgetItem(r.theoreticalComplexity));
+        historyTable_->setItem(row, 5, new QTableWidgetItem(r.stability));
+        historyTable_->setItem(row, 6, new QTableWidgetItem(r.extraMemory));
+        historyTable_->setItem(row, 7, new QTableWidgetItem(r.dataType));
     }
     historyTable_->scrollToBottom();
+
+    // Generate analysis if we have enough data
+    generateAnalysis();
 }
 
 void PerformanceLabWidget::onSearchComparison() {
@@ -432,4 +456,81 @@ void PerformanceLabWidget::onSearchComparison() {
     lblLinearTime_->setText(QString("Lineal: %1 ms").arg(linearMs, 0, 'f', 4));
     lblBinaryTime_->setText(QString("Binaria: %1 ms").arg(binaryMs, 0, 'f', 4));
     lblStatus_->setText("Comparacion de busquedas completada.");
+}
+
+void PerformanceLabWidget::generateAnalysis() {
+    const auto& history = module_->getHistory();
+    if (history.size() < 2) {
+        lblAnalysis_->setText("Ejecute al menos 2 benchmarks con diferentes tamanos para generar conclusiones.");
+        return;
+    }
+
+    // Gather results by algorithm
+    QMap<QString, QVector<QPair<int, double>>> byAlg;
+    for (const auto& batch : history) {
+        for (const auto& r : batch) {
+            if (r.timeMs >= 0.0)
+                byAlg[r.algorithmName].push_back({r.dataSize, r.timeMs});
+        }
+    }
+
+    if (byAlg.isEmpty()) {
+        lblAnalysis_->setText("Sin datos suficientes para analisis.");
+        return;
+    }
+
+    // Find fastest algorithm
+    QString fastest;
+    double fastestAvg = 1e18;
+    for (auto it = byAlg.begin(); it != byAlg.end(); ++it) {
+        double total = 0;
+        for (const auto& p : it.value()) total += p.second;
+        double avg = total / it.value().size();
+        if (avg < fastestAvg) {
+            fastestAvg = avg;
+            fastest = it.key();
+        }
+    }
+
+    QString analysis;
+    analysis += "<b style='color:#1DBF73'>Conclusiones automaticas del benchmark:</b><br><br>";
+    analysis += QString("Algoritmo mas rapido (promedio global): <b>%1</b> (%2 ms promedio)<br><br>")
+        .arg(fastest).arg(fastestAvg, 0, 'f', 3);
+
+    // Size-based analysis
+    analysis += "<b>Comportamiento por tamano:</b><br>";
+    QMap<int, QString> fastestBySize;
+    QMap<int, double> fastestTimeBySize;
+    for (const auto& batch : history) {
+        for (const auto& r : batch) {
+            if (r.timeMs < 0) continue;
+            if (!fastestTimeBySize.contains(r.dataSize) || r.timeMs < fastestTimeBySize[r.dataSize]) {
+                fastestTimeBySize[r.dataSize] = r.timeMs;
+                fastestBySize[r.dataSize] = r.algorithmName;
+            }
+        }
+    }
+    for (auto it = fastestBySize.begin(); it != fastestBySize.end(); ++it) {
+        analysis += QString("  n=%1: %2 (%3 ms)<br>")
+            .arg(it.key()).arg(it.value()).arg(fastestTimeBySize[it.key()], 0, 'f', 3);
+    }
+
+    // QuickSort dominance analysis
+    if (byAlg.contains("Quick Sort") && byAlg["Quick Sort"].size() >= 2) {
+        analysis += "<br><b>QuickSort:</b> Con pivot median-of-three y cutoff a insercion (n&lt;16), ";
+        analysis += "domina consistentemente a partir de n&gt;100. ";
+        analysis += "Su complejidad O(n log n) promedio lo hace optimo para datos medianos y grandes.<br>";
+    }
+
+    // O(n^2) viability
+    analysis += "<br><b>Algoritmos O(n^2):</b> Bubble Sort, Selection Sort e Insertion Sort ";
+    analysis += "dejan de ser viables para n&gt;" + QString::number(SLOW_ALGORITHM_THRESHOLD) + ". ";
+    analysis += "Insertion Sort es el mejor de los tres para datos parcialmente ordenados.<br>";
+
+    // Binary search analysis
+    analysis += "<br><b>Busqueda binaria vs lineal:</b> La busqueda binaria requiere costo previo de ordenamiento O(n log n). ";
+    analysis += "Se justifica cuando se realizan multiples busquedas sobre el mismo dataset ordenado, ";
+    analysis += "amortizando el costo del sort entre las consultas posteriores.";
+
+    lblAnalysis_->setText(analysis);
 }

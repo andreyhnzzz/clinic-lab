@@ -16,6 +16,7 @@ public:
     }
 
     T pop() {
+        if (heap_.isEmpty()) return T{};
         T top = heap_.front();
         heap_[0] = heap_.back();
         heap_.pop_back();

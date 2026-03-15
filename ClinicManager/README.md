@@ -6,10 +6,21 @@ Sistema de gestión para clínica privada costarricense desarrollado con **C++17
 
 | # | Módulo | Descripción | Estructura de Datos |
 |---|--------|-------------|---------------------|
+| 0 | Dashboard Ejecutivo | Resumen KPI del sistema completo | Lectura del ClinicDataStore |
 | 1 | Cola de Atención | Gestión de pacientes por prioridad | Min-Heap (PriorityQueue<T>) |
 | 2 | Búsqueda de Expedientes | Búsqueda multi-criterio | HashTable + Búsqueda Binaria |
 | 3 | Árbol de Diagnósticos | Árbol N-ario ICD-10 | N-ary Tree |
-| 4 | Laboratorio de Rendimiento | Benchmarking de algoritmos | Comparación empírica |
+| 4 | Laboratorio de Rendimiento | Benchmarking de algoritmos | Comparación empírica + SortMetrics |
+| 5 | Auditoría de Integridad | Validación del sistema | Verificación de índices/datos |
+| 6 | Registro de Eventos | Log técnico filtrable | QVector<LogEntry> circular |
+
+### Características Adicionales
+
+- **Flujo clínico completo**: Paciente → Cola → Atender → Registrar Consulta → Actualizar expediente automáticamente
+- **Persistencia JSON**: Guardar/cargar pacientes y consultas desde archivo
+- **Análisis automático de benchmarks**: Conclusiones sobre algoritmos más rápidos, viabilidad O(n²), comparación de búsquedas
+- **Métricas avanzadas de ordenamiento**: Comparaciones, complejidad teórica, estabilidad, memoria auxiliar
+- **Auditoría de integridad**: Detección de duplicados, consultas huérfanas, prioridades/fechas/costos inválidos
 
 ---
 
@@ -97,6 +108,26 @@ cmake --build . -- /m        # Windows (MSVC)
 .\ClinicManager.exe           # Windows
 ```
 
+## Despliegue en Windows (portable)
+
+Para crear un ejecutable portable que funcione fuera de Qt Creator:
+
+```cmd
+cd ClinicManager
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --config Release
+
+REM Copiar el ejecutable a una carpeta de distribución
+mkdir dist
+copy Release\ClinicManager.exe dist\
+
+REM Usar windeployqt para copiar las DLLs de Qt necesarias
+windeployqt dist\ClinicManager.exe
+```
+
+La carpeta `dist/` resultante es portable y ejecutable en cualquier máquina Windows sin Qt instalado.
+
 ## Requisitos
 
 - CMake ≥ 3.16
@@ -111,11 +142,12 @@ ClinicManager/
 ├── main.cpp
 ├── src/
 │   ├── models/          # Paciente, Consulta, Diagnostico
+│   ├── core/            # ClinicDataStore, SystemAudit, EventLog, JsonPersistence
 │   ├── data_structures/ # PriorityQueue<T>, HashTable<K,V>, DiagnosisTree
 │   ├── algorithms/      # Sorting (Bubble, Selection, Insertion, Quick) + Searching
 │   ├── modules/         # Lógica de negocio por módulo
 │   ├── utils/           # DataGenerator, PerformanceMeter, GraphPlotter
-│   └── gui/             # Widgets Qt sin archivos .ui
+│   └── gui/             # Dashboard, Cola, Expedientes, Diagnósticos, Lab, Auditoría, Log
 └── resources/
-    └── styles.qss       # Tema oscuro médico
+    └── styles.qss       # Tema Clinical Graphite
 ```
