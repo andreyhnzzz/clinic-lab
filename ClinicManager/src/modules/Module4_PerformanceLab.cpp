@@ -137,21 +137,36 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
     if (datasetType == "Pacientes") {
         QVector<Paciente> data = preparePacientes(pacientes, dataSize);
         auto comp = pacienteComparator(sortField);
+        // Sort by the chosen field (required for binary search)
         std::sort(data.begin(), data.end(), comp);
 
-        // Pick a target from the middle
+        // Pick a target from the middle of the sorted dataset
         Paciente target = data[dataSize / 2];
 
-        // Linear search
+        // ---------- LINEAR SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
-            linearSearch<Paciente>(data, [&](const Paciente& p) {
-                return p.cedula == target.cedula;
-            });
+            if (sortField == "Nombre") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.nombre == target.nombre;
+                });
+            } else if (sortField == "Edad") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.edad == target.edad;
+                });
+            } else if (sortField == "Fecha de Registro") {
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.fechaRegistro == target.fechaRegistro;
+                });
+            } else { // Prioridad
+                linearSearch<Paciente>(data, [&](const Paciente& p) {
+                    return p.prioridad == target.prioridad;
+                });
+            }
         }
         double linearMs = meter.stop() / trials;
 
-        // Binary search (by the sort field)
+        // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
             if (sortField == "Nombre") {
@@ -164,10 +179,15 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                     [](const Paciente& p, const int& key) -> int {
                         return p.edad - key;
                     });
-            } else {
+            } else if (sortField == "Fecha de Registro") {
                 binarySearch<Paciente, std::string>(data, target.fechaRegistro,
                     [](const Paciente& p, const std::string& key) -> int {
                         return p.fechaRegistro.compare(key);
+                    });
+            } else { // Prioridad
+                binarySearch<Paciente, int>(data, target.prioridad,
+                    [](const Paciente& p, const int& key) -> int {
+                        return p.prioridad - key;
                     });
             }
         }
@@ -177,18 +197,31 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
     } else {
         QVector<Consulta> data = prepareConsultas(consultas, pacientes, dataSize);
         auto comp = consultaComparator(sortField);
+        // Sort by the chosen field (required for binary search)
         std::sort(data.begin(), data.end(), comp);
 
         Consulta target = data[dataSize / 2];
 
+        // ---------- LINEAR SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
-            linearSearch<Consulta>(data, [&](const Consulta& c) {
-                return c.idConsulta == target.idConsulta;
-            });
+            if (sortField == "Gravedad") {
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.gravedad == target.gravedad;
+                });
+            } else if (sortField == "Costo") {
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.costo == target.costo;
+                });
+            } else { // Fecha
+                linearSearch<Consulta>(data, [&](const Consulta& c) {
+                    return c.fecha == target.fecha;
+                });
+            }
         }
         double linearMs = meter.stop() / trials;
 
+        // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
         for (int t = 0; t < trials; ++t) {
             if (sortField == "Gravedad") {
@@ -203,7 +236,7 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                         if (c.costo > key) return 1;
                         return 0;
                     });
-            } else {
+            } else { // Fecha
                 binarySearch<Consulta, std::string>(data, target.fecha,
                     [](const Consulta& c, const std::string& key) -> int {
                         return c.fecha.compare(key);
