@@ -29,7 +29,6 @@ private:
     void setupUI();
     void populateTree();
     void showTraversalResults(const QVector<Diagnostico>& results, const QString& title);
-    void showFullTraversalResults(const QStringList& lines, const QString& title);
 
     Module3_DiagnosisTree* module_ = nullptr;
 

@@ -274,17 +274,6 @@ void DiagnosisTreeWidget::onFullTraversal() {
     detailPanel_->setHtml(text);
 }
 
-void DiagnosisTreeWidget::showFullTraversalResults(const QStringList& lines, const QString& title) {
-    QString text;
-    text += QString("<h3>%1</h3>").arg(title);
-    text += QString("<p>Total nodos visitados: <b>%1</b></p><hr/>").arg(lines.size());
-    text += "<pre style='color:#E6EDF3; font-size: 12px;'>";
-    for (const auto& line : lines)
-        text += line.toHtmlEscaped() + "\n";
-    text += "</pre>";
-    detailPanel_->setHtml(text);
-}
-
 void DiagnosisTreeWidget::onExpandAll() {
     treeWidget_->expandAll();
 }
