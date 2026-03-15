@@ -73,12 +73,18 @@ void AuditWidget::displayReport(const AuditReport& report) {
     lblSummary_->setText(report.summary());
     lblTimestamp_->setText(report.timestamp.toString("yyyy-MM-dd hh:mm:ss"));
 
-    if (report.criticalCount > 0)
+    QString statusText;
+    if (report.criticalCount > 0) {
         lblSummary_->setStyleSheet("color: #EF4444; font-size: 13px; font-weight: bold;");
-    else if (report.warningCount > 0)
+        statusText = QString("%1 criticos").arg(report.criticalCount);
+    } else if (report.warningCount > 0) {
         lblSummary_->setStyleSheet("color: #F59E0B; font-size: 13px; font-weight: bold;");
-    else
+        statusText = QString("%1 advertencias").arg(report.warningCount);
+    } else {
         lblSummary_->setStyleSheet("color: #1DBF73; font-size: 13px; font-weight: bold;");
+        statusText = "Sin problemas";
+    }
+    emit auditStatusChanged(statusText);
 
     table_->setRowCount(0);
     for (const auto& entry : report.entries) {

@@ -10,6 +10,9 @@ class AuditWidget : public QWidget {
 public:
     explicit AuditWidget(QWidget* parent = nullptr);
 
+signals:
+    void auditStatusChanged(const QString& status);
+
 private slots:
     void onRunAudit();
     void displayReport(const AuditReport& report);

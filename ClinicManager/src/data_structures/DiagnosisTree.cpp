@@ -1,5 +1,6 @@
 #include "DiagnosisTree.h"
 #include <QQueue>
+#include <QPair>
 
 DiagnosisTree::DiagnosisTree() {
     root_ = new DiagnosisNode("Árbol de Diagnósticos", "", "", -1);
@@ -179,6 +180,103 @@ int DiagnosisTree::totalNodes() const {
     int count = 0;
     countHelper(root_, count);
     return count;
+}
+
+QVector<Diagnostico> DiagnosisTree::postOrderTraversal() const {
+    QVector<Diagnostico> results;
+    postOrderHelper(root_, results);
+    return results;
+}
+
+void DiagnosisTree::postOrderHelper(DiagnosisNode* node, QVector<Diagnostico>& results) const {
+    if (!node) return;
+    for (auto* child : node->children)
+        postOrderHelper(child, results);
+    if (node->level == 2) {
+        Diagnostico d;
+        d.codigo = node->code.toStdString();
+        d.nombre = node->name.toStdString();
+        d.categoria = node->parent ? node->parent->parent->name.toStdString() : "";
+        d.subcategoria = node->parent ? node->parent->name.toStdString() : "";
+        d.descripcion = node->description.toStdString();
+        results.push_back(d);
+    }
+}
+
+QStringList DiagnosisTree::fullPreOrderTraversal() const {
+    QStringList results;
+    fullPreOrderHelper(root_, results, 0);
+    return results;
+}
+
+void DiagnosisTree::fullPreOrderHelper(DiagnosisNode* node, QStringList& results, int depth) const {
+    if (!node) return;
+    QString indent = QString("  ").repeated(depth);
+    QString levelTag;
+    switch (node->level) {
+        case -1: levelTag = "RAIZ"; break;
+        case 0:  levelTag = "AREA"; break;
+        case 1:  levelTag = "ESPECIALIDAD"; break;
+        case 2:  levelTag = "DIAGNOSTICO"; break;
+        default: levelTag = "NODO"; break;
+    }
+    QString line = QString("%1[%2] %3").arg(indent, levelTag, node->name);
+    if (!node->code.isEmpty())
+        line += QString(" (%1)").arg(node->code);
+    results.push_back(line);
+    for (auto* child : node->children)
+        fullPreOrderHelper(child, results, depth + 1);
+}
+
+QStringList DiagnosisTree::fullBfsTraversal() const {
+    QStringList results;
+    if (!root_) return results;
+    QQueue<QPair<DiagnosisNode*, int>> queue;
+    queue.enqueue({root_, 0});
+    while (!queue.isEmpty()) {
+        auto [node, depth] = queue.dequeue();
+        QString indent = QString("  ").repeated(depth);
+        QString levelTag;
+        switch (node->level) {
+            case -1: levelTag = "RAIZ"; break;
+            case 0:  levelTag = "AREA"; break;
+            case 1:  levelTag = "ESPECIALIDAD"; break;
+            case 2:  levelTag = "DIAGNOSTICO"; break;
+            default: levelTag = "NODO"; break;
+        }
+        QString line = QString("%1[%2] %3").arg(indent, levelTag, node->name);
+        if (!node->code.isEmpty())
+            line += QString(" (%1)").arg(node->code);
+        results.push_back(line);
+        for (auto* child : node->children)
+            queue.enqueue({child, depth + 1});
+    }
+    return results;
+}
+
+QStringList DiagnosisTree::fullPostOrderTraversal() const {
+    QStringList results;
+    fullPostOrderHelper(root_, results, 0);
+    return results;
+}
+
+void DiagnosisTree::fullPostOrderHelper(DiagnosisNode* node, QStringList& results, int depth) const {
+    if (!node) return;
+    for (auto* child : node->children)
+        fullPostOrderHelper(child, results, depth + 1);
+    QString indent = QString("  ").repeated(depth);
+    QString levelTag;
+    switch (node->level) {
+        case -1: levelTag = "RAIZ"; break;
+        case 0:  levelTag = "AREA"; break;
+        case 1:  levelTag = "ESPECIALIDAD"; break;
+        case 2:  levelTag = "DIAGNOSTICO"; break;
+        default: levelTag = "NODO"; break;
+    }
+    QString line = QString("%1[%2] %3").arg(indent, levelTag, node->name);
+    if (!node->code.isEmpty())
+        line += QString(" (%1)").arg(node->code);
+    results.push_back(line);
 }
 
 int DiagnosisTree::totalDiagnoses() const {

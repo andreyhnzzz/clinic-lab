@@ -19,6 +19,8 @@ private slots:
     void onFilterBySpecialty();
     void onPreOrder();
     void onBFS();
+    void onPostOrder();
+    void onFullTraversal();
     void onExpandAll();
     void onCollapseAll();
     void onItemSelected(QTreeWidgetItem* item, int column);
@@ -39,6 +41,8 @@ private:
     QPushButton* btnFilterSpec_ = nullptr;
     QPushButton* btnPreOrder_ = nullptr;
     QPushButton* btnBFS_ = nullptr;
+    QPushButton* btnPostOrder_ = nullptr;
+    QPushButton* btnFullTraversal_ = nullptr;
     QPushButton* btnExpand_ = nullptr;
     QPushButton* btnCollapse_ = nullptr;
     QTextEdit* detailPanel_ = nullptr;

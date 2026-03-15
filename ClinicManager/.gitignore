@@ -8,6 +8,22 @@ build-*/
 # Generic build directory (command-line builds)
 build/
 
+# IDE files
+.idea/
+.vscode/
+.qtc_clangd/
+*.qtcreator/
+
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+moc_*
+qrc_*
+
 # macOS
 .DS_Store
 

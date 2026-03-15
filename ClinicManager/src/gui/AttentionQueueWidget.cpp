@@ -210,6 +210,20 @@ void AttentionQueueWidget::refreshTable() {
     }
 
     emit queueSizeChanged(total);
+
+    // Emit next patient info for dashboard
+    QString nextInfo;
+    if (!ordered.isEmpty()) {
+        const Paciente& np = ordered[0].paciente;
+        QString ps;
+        switch (np.prioridad) {
+            case 1: ps = "CRITICO"; break;
+            case 2: ps = "URGENTE"; break;
+            default: ps = "NORMAL"; break;
+        }
+        nextInfo = QString("%1 | %2").arg(QString::fromStdString(np.nombre), ps);
+    }
+    emit nextPatientChanged(nextInfo);
 }
 
 void AttentionQueueWidget::onRegisterPatient() {

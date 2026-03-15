@@ -1,1 +1,38 @@
 build/
+
+# Qt Creator
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+build-*/
+
+# IDE files
+.idea/
+.vscode/
+*.pro.user
+*.qbs.user
+*.qtcreator/
+.qtc_clangd/
+
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+moc_*
+qrc_*
+*.moc
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

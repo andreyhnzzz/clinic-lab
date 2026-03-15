@@ -33,10 +33,17 @@ public:
 
     QVector<Diagnostico> preOrderTraversal() const;
     QVector<Diagnostico> bfsTraversal() const;
+    QVector<Diagnostico> postOrderTraversal() const;
     QVector<Diagnostico> searchByName(const QString& query) const;
     QVector<Diagnostico> searchByCode(const QString& code) const;
     QVector<Diagnostico> listBySpecialty(const QString& specialty) const;
     QStringList allSpecialties() const;
+
+    // Full traversals that include ALL nodes (areas, specialties, diagnoses)
+    // Returns a formatted string for each node: "[level] name (code)"
+    QStringList fullPreOrderTraversal() const;
+    QStringList fullBfsTraversal() const;
+    QStringList fullPostOrderTraversal() const;
 
     int totalNodes() const;
     int totalDiagnoses() const;
@@ -50,5 +57,8 @@ private:
     DiagnosisNode* findSpecialty(DiagnosisNode* area, const QString& name) const;
 
     void preOrderHelper(DiagnosisNode* node, QVector<Diagnostico>& results) const;
+    void postOrderHelper(DiagnosisNode* node, QVector<Diagnostico>& results) const;
+    void fullPreOrderHelper(DiagnosisNode* node, QStringList& results, int depth) const;
+    void fullPostOrderHelper(DiagnosisNode* node, QStringList& results, int depth) const;
     void countHelper(DiagnosisNode* node, int& count) const;
 };

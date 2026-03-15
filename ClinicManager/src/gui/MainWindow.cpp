@@ -148,6 +148,12 @@ void MainWindow::setupUI() {
             this, &MainWindow::updateStatusBar);
     connect(queueWidget_, &AttentionQueueWidget::queueSizeChanged,
             dashWidget_, &DashboardWidget::setQueueSize);
+    connect(queueWidget_, &AttentionQueueWidget::nextPatientChanged,
+            dashWidget_, &DashboardWidget::setNextPatient);
+    connect(auditWidget_, &AuditWidget::auditStatusChanged,
+            dashWidget_, &DashboardWidget::setAuditStatus);
+    connect(perfWidget_, &PerformanceLabWidget::benchmarkCompleted,
+            dashWidget_, &DashboardWidget::setLastBenchmark);
 }
 
 void MainWindow::switchModule(int index) {
