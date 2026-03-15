@@ -1,15 +1,13 @@
 #include "JsonPersistence.h"
 #include "ClinicDataStore.h"
 #include "EventLog.h"
+#include "DataConsistencyValidator.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
-#include <QSet>
-#include <QDate>
-#include <QRegularExpression>
 
 JsonPersistence::JsonPersistence(QObject* parent) : QObject(parent) {}
 
@@ -124,16 +122,8 @@ bool JsonPersistence::loadFromFile(const QString& filePath) {
         return false;
     }
 
-    auto isValidIsoDate = [](const QString& dateStr) -> bool {
-        static const QRegularExpression rx("^\\d{4}-\\d{2}-\\d{2}$");
-        if (!rx.match(dateStr).hasMatch()) return false;
-        QDate d = QDate::fromString(dateStr, "yyyy-MM-dd");
-        return d.isValid();
-    };
-
     // Load patients
     QVector<Paciente> pacientes;
-    QSet<QString> cedulas;
     QJsonArray pacArr = root["pacientes"].toArray();
     for (int i = 0; i < pacArr.size(); ++i) {
         const auto& val = pacArr[i];
@@ -154,38 +144,6 @@ bool JsonPersistence::loadFromFile(const QString& filePath) {
         p.diagnostico = obj["diagnostico"].toString().toStdString();
         p.telefono = obj["telefono"].toString().toStdString();
         p.canton = obj["canton"].toString().toStdString();
-
-        QString cedula = QString::fromStdString(p.cedula).trimmed();
-        QString fechaRegistro = QString::fromStdString(p.fechaRegistro).trimmed();
-        if (cedula.isEmpty()) {
-            QString err = QString("Paciente[%1] invalido: cedula vacia.").arg(i);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (cedulas.contains(cedula)) {
-            QString err = QString("Paciente[%1] invalido: cedula duplicada '%2'.")
-                .arg(i).arg(cedula);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (p.prioridad < 1 || p.prioridad > 3) {
-            QString err = QString("Paciente[%1] invalido: prioridad fuera de rango (%2).")
-                .arg(i).arg(p.prioridad);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (!isValidIsoDate(fechaRegistro)) {
-            QString err = QString("Paciente[%1] invalido: fechaRegistro '%2' no valida.")
-                .arg(i).arg(fechaRegistro);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-
-        cedulas.insert(cedula);
         pacientes.push_back(p);
     }
 
@@ -213,45 +171,17 @@ bool JsonPersistence::loadFromFile(const QString& filePath) {
         c.gravedad = obj["gravedad"].toInt(1);
         c.costo = obj["costo"].toDouble();
         c.notas = obj["notas"].toString().toStdString();
-
-        QString cedulaPaciente = QString::fromStdString(c.cedulaPaciente).trimmed();
-        QString fecha = QString::fromStdString(c.fecha).trimmed();
-        if (cedulaPaciente.isEmpty()) {
-            QString err = QString("Consulta[%1] invalida: cedulaPaciente vacia.").arg(i);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (!cedulas.contains(cedulaPaciente)) {
-            QString err = QString("Consulta[%1] huerfana: cedulaPaciente '%2' no existe en pacientes.")
-                .arg(i).arg(cedulaPaciente);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (!isValidIsoDate(fecha)) {
-            QString err = QString("Consulta[%1] invalida: fecha '%2' no valida.")
-                .arg(i).arg(fecha);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (c.gravedad < 1 || c.gravedad > 5) {
-            QString err = QString("Consulta[%1] invalida: gravedad fuera de rango (%2).")
-                .arg(i).arg(c.gravedad);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-        if (c.costo < 0.0) {
-            QString err = QString("Consulta[%1] invalida: costo negativo (%2).")
-                .arg(i).arg(c.costo);
-            emit errorOccurred(err);
-            EventLog::instance().error("Persistencia", err);
-            return false;
-        }
-
         consultas.push_back(c);
+    }
+
+    QVector<DataValidationIssue> issues = DataConsistencyValidator::validateDataset(pacientes, consultas);
+    if (!issues.isEmpty()) {
+        const auto& issue = issues.first();
+        QString err = QString("Carga rechazada (modo estricto) [%1]: %2")
+            .arg(issue.category, issue.message);
+        emit errorOccurred(err);
+        EventLog::instance().error("Persistencia", err);
+        return false;
     }
 
     // Transactional commit: mutate store only after full validation passes.

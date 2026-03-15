@@ -18,6 +18,7 @@ set(SOURCES
     src/core/SystemAudit.cpp
     src/core/EventLog.cpp
     src/core/JsonPersistence.cpp
+    src/core/DataConsistencyValidator.cpp
     src/data_structures/DiagnosisTree.cpp
     src/modules/Module1_AttentionQueue.cpp
     src/modules/Module2_RecordsSearch.cpp
@@ -43,6 +44,7 @@ set(HEADERS
     src/core/SystemAudit.h
     src/core/EventLog.h
     src/core/JsonPersistence.h
+    src/core/DataConsistencyValidator.h
     src/data_structures/PriorityQueue.h
     src/data_structures/DiagnosisTree.h
     src/data_structures/HashTable.h

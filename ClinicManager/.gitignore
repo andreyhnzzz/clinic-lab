@@ -7,6 +7,10 @@ build-*/
 
 # Generic build directory (command-line builds)
 build/
+# Other common CMake/IDE build folders
+cmake-build-*/
+out/
+dist/
 
 # IDE files
 .idea/
@@ -23,6 +27,12 @@ build/
 *.dylib
 moc_*
 qrc_*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+Makefile
+compile_commands.json
 
 # macOS
 .DS_Store

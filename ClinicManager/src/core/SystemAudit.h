@@ -46,12 +46,6 @@ signals:
     void auditCompleted(const AuditReport& report);
 
 private:
-    void checkDuplicatePatients(AuditReport& report);
-    void checkOrphanConsultations(AuditReport& report);
-    void checkInvalidPriorities(AuditReport& report);
-    void checkInvalidDates(AuditReport& report);
-    void checkInvalidCosts(AuditReport& report);
-    void checkInvalidGravedad(AuditReport& report);
     void checkIndexConsistency(AuditReport& report);
 
     void addEntry(AuditReport& report, AuditEntry::Severity sev,
