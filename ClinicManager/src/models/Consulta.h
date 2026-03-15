@@ -7,6 +7,9 @@ struct Consulta {
     std::string fecha;        // "YYYY-MM-DD"
     std::string medicoTratante;
     std::string diagnostico;
+    std::string codigoDiagnostico;  // ICD-10 code from diagnosis tree
+    std::string areaDiagnostico;    // Medical area
+    std::string especialidadDiagnostico; // Specialty
     int gravedad = 1;         // 1-5
     double costo = 0.0;
     std::string notas;

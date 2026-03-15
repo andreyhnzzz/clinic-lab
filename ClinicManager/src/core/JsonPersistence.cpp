@@ -42,6 +42,9 @@ bool JsonPersistence::saveToFile(const QString& filePath) {
         obj["fecha"] = QString::fromStdString(c.fecha);
         obj["medicoTratante"] = QString::fromStdString(c.medicoTratante);
         obj["diagnostico"] = QString::fromStdString(c.diagnostico);
+        obj["codigoDiagnostico"] = QString::fromStdString(c.codigoDiagnostico);
+        obj["areaDiagnostico"] = QString::fromStdString(c.areaDiagnostico);
+        obj["especialidadDiagnostico"] = QString::fromStdString(c.especialidadDiagnostico);
         obj["gravedad"] = c.gravedad;
         obj["costo"] = c.costo;
         obj["notas"] = QString::fromStdString(c.notas);
@@ -120,6 +123,9 @@ bool JsonPersistence::loadFromFile(const QString& filePath) {
         c.fecha = obj["fecha"].toString().toStdString();
         c.medicoTratante = obj["medicoTratante"].toString().toStdString();
         c.diagnostico = obj["diagnostico"].toString().toStdString();
+        c.codigoDiagnostico = obj["codigoDiagnostico"].toString().toStdString();
+        c.areaDiagnostico = obj["areaDiagnostico"].toString().toStdString();
+        c.especialidadDiagnostico = obj["especialidadDiagnostico"].toString().toStdString();
         c.gravedad = obj["gravedad"].toInt(1);
         c.costo = obj["costo"].toDouble();
         c.notas = obj["notas"].toString().toStdString();

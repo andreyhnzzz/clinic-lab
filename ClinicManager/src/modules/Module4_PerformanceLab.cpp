@@ -12,27 +12,33 @@
 Module4_PerformanceLab::Module4_PerformanceLab(QObject* parent)
     : QObject(parent) {}
 
-// Helper: build a QVector<Paciente> of requested size from source, repeating/generating as needed
+// Helper: build a QVector<Paciente> of requested size. If source has fewer records
+// than needed, generate additional unique records to fill the gap — never repeat.
 static QVector<Paciente> preparePacientes(const QVector<Paciente>& source, int n) {
-    QVector<Paciente> data;
-    data.reserve(n);
-    if (source.isEmpty()) {
+    if (source.isEmpty())
         return DataGenerator::generatePacientes(n);
+    if (source.size() >= n) {
+        return source.mid(0, n);
     }
-    for (int i = 0; i < n; ++i)
-        data.push_back(source[i % source.size()]);
+    // Use existing records + generate the deficit with unique data
+    QVector<Paciente> data = source;
+    QVector<Paciente> extra = DataGenerator::generatePacientes(n - source.size());
+    data.append(extra);
     return data;
 }
 
 static QVector<Consulta> prepareConsultas(const QVector<Consulta>& source,
                                            const QVector<Paciente>& pacs, int n) {
-    QVector<Consulta> data;
-    data.reserve(n);
-    if (source.isEmpty()) {
+    if (source.isEmpty())
         return DataGenerator::generateConsultas(pacs, n);
+    if (source.size() >= n) {
+        return source.mid(0, n);
     }
-    for (int i = 0; i < n; ++i)
-        data.push_back(source[i % source.size()]);
+    // Use existing records + generate the deficit with unique data
+    QVector<Consulta> data = source;
+    QVector<Paciente> allPacs = pacs.isEmpty() ? DataGenerator::generatePacientes(100) : pacs;
+    QVector<Consulta> extra = DataGenerator::generateConsultas(allPacs, n - source.size());
+    data.append(extra);
     return data;
 }
 
@@ -126,23 +132,21 @@ static QVector<BenchmarkResult> benchmarkSortAlgorithms(
 
         meter.start();
 
-        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, instFunc);
-        else if (alg == "Selection Sort") selectionSort<T>(copy, instFunc);
-        else if (alg == "Insertion Sort") insertionSort<T>(copy, instFunc);
-        else if (alg == "Quick Sort")     quickSort<T>(copy, instFunc);
+        if      (alg == "Bubble Sort")    bubbleSort<T>(copy, instFunc, &swapCount);
+        else if (alg == "Selection Sort") selectionSort<T>(copy, instFunc, &swapCount);
+        else if (alg == "Insertion Sort") insertionSort<T>(copy, instFunc, &swapCount);
+        else if (alg == "Quick Sort")     quickSort<T>(copy, instFunc, &swapCount);
         else if (alg == "std::sort")      std::sort(copy.begin(), copy.end(), instFunc);
 
         r.timeMs = meter.stop();
         r.comparisons = compCount;
-        // Swap counts are estimates based on algorithm characteristics
-        // (actual swap instrumentation would require modifying sort internals)
-        if (alg == "Bubble Sort" || alg == "Selection Sort")
-            r.swaps = compCount / 3;
-        else if (alg == "Insertion Sort")
-            r.swaps = compCount / 2;
+        r.swaps = swapCount;
+        if (alg == "Insertion Sort")
+            r.notes = "Movimientos reales (no swaps)";
+        else if (alg == "std::sort")
+            r.notes = "Swaps no instrumentables (implementacion interna)";
         else
-            r.swaps = compCount / 4;
-        r.notes = "Swaps: estimado";
+            r.notes = "Swaps instrumentados";
 
         results.push_back(r);
         if (progressCb) progressCb(++done * 100 / total);
@@ -172,7 +176,7 @@ QVector<BenchmarkResult> Module4_PerformanceLab::runBenchmarkBatch(
     }
 }
 
-QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
+Module4_PerformanceLab::SearchCompResult Module4_PerformanceLab::compareSearchMethods(
     const QVector<Paciente>& pacientes,
     const QVector<Consulta>& consultas,
     const QString& datasetType,
@@ -181,12 +185,18 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
 {
     PerformanceMeter meter;
     const int trials = 1000;
+    SearchCompResult result;
 
     if (datasetType == "Pacientes") {
         QVector<Paciente> data = preparePacientes(pacientes, dataSize);
         auto comp = pacienteComparator(sortField);
-        // Sort by the chosen field (required for binary search)
-        std::sort(data.begin(), data.end(), comp);
+
+        // Measure sorting cost separately
+        QVector<Paciente> dataCopy = data;
+        meter.start();
+        std::sort(dataCopy.begin(), dataCopy.end(), comp);
+        result.sortMs = meter.stop();
+        data = dataCopy; // use the sorted data for both searches
 
         // Pick a target from the middle of the sorted dataset
         Paciente target = data[dataSize / 2];
@@ -212,7 +222,7 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                 });
             }
         }
-        double linearMs = meter.stop() / trials;
+        result.linearMs = meter.stop() / trials;
 
         // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
@@ -239,14 +249,19 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                     });
             }
         }
-        double binaryMs = meter.stop() / trials;
-        return {linearMs, binaryMs};
+        result.binaryMs = meter.stop() / trials;
+        return result;
 
     } else {
         QVector<Consulta> data = prepareConsultas(consultas, pacientes, dataSize);
         auto comp = consultaComparator(sortField);
-        // Sort by the chosen field (required for binary search)
-        std::sort(data.begin(), data.end(), comp);
+
+        // Measure sorting cost separately
+        QVector<Consulta> dataCopy = data;
+        meter.start();
+        std::sort(dataCopy.begin(), dataCopy.end(), comp);
+        result.sortMs = meter.stop();
+        data = dataCopy;
 
         Consulta target = data[dataSize / 2];
 
@@ -267,7 +282,7 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                 });
             }
         }
-        double linearMs = meter.stop() / trials;
+        result.linearMs = meter.stop() / trials;
 
         // ---------- BINARY SEARCH by the SAME field ----------
         meter.start();
@@ -291,8 +306,8 @@ QPair<double, double> Module4_PerformanceLab::compareSearchMethods(
                     });
             }
         }
-        double binaryMs = meter.stop() / trials;
-        return {linearMs, binaryMs};
+        result.binaryMs = meter.stop() / trials;
+        return result;
     }
 }
 

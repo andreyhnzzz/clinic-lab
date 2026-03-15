@@ -19,10 +19,14 @@ void ClinicDataStore::addPaciente(const Paciente& p) {
 }
 
 void ClinicDataStore::loadPacientes(const QVector<Paciente>& list) {
-    pacientes_ = list;
+    pacientes_.clear();
     cedulaIndex_.clear();
-    for (int i = 0; i < pacientes_.size(); ++i)
-        cedulaIndex_.insert(pacientes_[i].cedula, i);
+    for (const auto& p : list) {
+        if (cedulaIndex_.contains(p.cedula)) continue; // skip duplicates
+        int idx = pacientes_.size();
+        pacientes_.push_back(p);
+        cedulaIndex_.insert(p.cedula, idx);
+    }
     emit dataChanged();
 }
 

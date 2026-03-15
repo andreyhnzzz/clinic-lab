@@ -180,9 +180,9 @@ void PerformanceLabWidget::setupUI() {
     splitter->addWidget(chartsWidget);
 
     // History table
-    historyTable_ = new QTableWidget(0, 8);
+    historyTable_ = new QTableWidget(0, 9);
     historyTable_->setHorizontalHeaderLabels({
-        "Algoritmo", "Tamano", "Tiempo (ms)", "Comparaciones",
+        "Algoritmo", "Tamano", "Tiempo (ms)", "Comparaciones", "Swaps/Movimientos",
         "Complejidad", "Estabilidad", "Memoria", "Tipo de Datos"});
     historyTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     historyTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -197,12 +197,15 @@ void PerformanceLabWidget::setupUI() {
     auto* searchLayout = new QHBoxLayout(searchGroup);
     lblLinearTime_ = new QLabel("Lineal: --");
     lblBinaryTime_ = new QLabel("Binaria: --");
+    lblSortCost_ = new QLabel("Costo orden: --");
     btnSearchComp_ = new QPushButton("Comparar Busquedas");
     btnSearchComp_->setObjectName("primaryButton");
     searchLayout->addWidget(btnSearchComp_);
     searchLayout->addWidget(lblLinearTime_);
     searchLayout->addWidget(new QLabel("|"));
     searchLayout->addWidget(lblBinaryTime_);
+    searchLayout->addWidget(new QLabel("|"));
+    searchLayout->addWidget(lblSortCost_);
     searchLayout->addStretch();
     mainLayout->addWidget(searchGroup);
 
@@ -427,16 +430,19 @@ void PerformanceLabWidget::addResultsToTable(const QVector<BenchmarkResult>& res
                 QString::number(r.timeMs, 'f', 3)));
             historyTable_->setItem(row, 3, new QTableWidgetItem(
                 QString::number(r.comparisons)));
+            historyTable_->setItem(row, 4, new QTableWidgetItem(
+                QString::number(r.swaps)));
         } else {
             auto* item = new QTableWidgetItem("Omitido");
             item->setForeground(QColor("#F59E0B"));
             historyTable_->setItem(row, 2, item);
             historyTable_->setItem(row, 3, new QTableWidgetItem("--"));
+            historyTable_->setItem(row, 4, new QTableWidgetItem("--"));
         }
-        historyTable_->setItem(row, 4, new QTableWidgetItem(r.theoreticalComplexity));
-        historyTable_->setItem(row, 5, new QTableWidgetItem(r.stability));
-        historyTable_->setItem(row, 6, new QTableWidgetItem(r.extraMemory));
-        historyTable_->setItem(row, 7, new QTableWidgetItem(r.dataType));
+        historyTable_->setItem(row, 5, new QTableWidgetItem(r.theoreticalComplexity));
+        historyTable_->setItem(row, 6, new QTableWidgetItem(r.stability));
+        historyTable_->setItem(row, 7, new QTableWidgetItem(r.extraMemory));
+        historyTable_->setItem(row, 8, new QTableWidgetItem(r.dataType));
     }
     historyTable_->scrollToBottom();
 
@@ -451,10 +457,11 @@ void PerformanceLabWidget::onSearchComparison() {
     QString field = getSortField();
 
     lblStatus_->setText("Ejecutando comparacion de busquedas...");
-    auto [linearMs, binaryMs] = Module4_PerformanceLab::compareSearchMethods(
+    auto res = Module4_PerformanceLab::compareSearchMethods(
         store.pacientes(), store.consultas(), dsType, field, dataSize);
-    lblLinearTime_->setText(QString("Lineal: %1 ms").arg(linearMs, 0, 'f', 4));
-    lblBinaryTime_->setText(QString("Binaria: %1 ms").arg(binaryMs, 0, 'f', 4));
+    lblLinearTime_->setText(QString("Lineal: %1 ms").arg(res.linearMs, 0, 'f', 4));
+    lblBinaryTime_->setText(QString("Binaria: %1 ms").arg(res.binaryMs, 0, 'f', 4));
+    lblSortCost_->setText(QString("Costo orden: %1 ms").arg(res.sortMs, 0, 'f', 3));
     lblStatus_->setText("Comparacion de busquedas completada.");
 }
 

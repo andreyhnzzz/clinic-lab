@@ -25,8 +25,14 @@ public:
         const QStringList& algorithms,
         const std::function<void(int)>& progressCb = {});
 
+    struct SearchCompResult {
+        double linearMs = 0.0;
+        double binaryMs = 0.0;
+        double sortMs = 0.0;
+    };
+
     // Compare linear vs binary search on real data
-    static QPair<double, double> compareSearchMethods(
+    static SearchCompResult compareSearchMethods(
         const QVector<Paciente>& pacientes,
         const QVector<Consulta>& consultas,
         const QString& datasetType,
