@@ -30,6 +30,7 @@ public:
     PatientRecord getPatientRecord(const QString& cedula);
     QVector<Paciente> getAllPacientes() const;
     QVector<Consulta> getAllConsultas() const;
+    const QVector<Consulta>& getAllConsultasRef() const;
 
     double getLastSearchTimeMs() const { return lastSearchTimeMs_; }
     int pacienteCount() const { return static_cast<int>(pacientes_.size()); }

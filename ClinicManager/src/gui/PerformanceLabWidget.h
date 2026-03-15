@@ -61,6 +61,7 @@ private:
     // Search comparison
     QLabel* lblLinearTime_ = nullptr;
     QLabel* lblBinaryTime_ = nullptr;
+    QLabel* lblSortCost_ = nullptr;
     QPushButton* btnSearchComp_ = nullptr;
     QLabel* lblAnalysis_ = nullptr;
 

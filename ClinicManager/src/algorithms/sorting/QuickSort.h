@@ -5,66 +5,76 @@
 
 namespace detail {
 
-// Median-of-three pivot selection to avoid worst-case on sorted/reverse input
+// Median-of-three pivot selection to avoid worst-case on sorted/reverse input.
+// Swaps here are real data movements that contribute to sorting correctness.
 template<typename T>
 int medianOfThree(QVector<T>& arr, int low, int high,
-                  std::function<bool(const T&, const T&)>& comp) {
+                  std::function<bool(const T&, const T&)>& comp,
+                  long long* swapCount = nullptr) {
     int mid = low + (high - low) / 2;
-    if (comp(arr[mid], arr[low])) qSwap(arr[low], arr[mid]);
-    if (comp(arr[high], arr[low])) qSwap(arr[low], arr[high]);
-    if (comp(arr[high], arr[mid])) qSwap(arr[mid], arr[high]);
+    if (comp(arr[mid], arr[low])) { qSwap(arr[low], arr[mid]); if (swapCount) ++(*swapCount); }
+    if (comp(arr[high], arr[low])) { qSwap(arr[low], arr[high]); if (swapCount) ++(*swapCount); }
+    if (comp(arr[high], arr[mid])) { qSwap(arr[mid], arr[high]); if (swapCount) ++(*swapCount); }
     // Median is now at mid; move it to high-1 for partitioning
     qSwap(arr[mid], arr[high]);
+    if (swapCount) ++(*swapCount);
     return high;
 }
 
 template<typename T>
 int partition(QVector<T>& arr, int low, int high,
-              std::function<bool(const T&, const T&)>& comp) {
+              std::function<bool(const T&, const T&)>& comp,
+              long long* swapCount = nullptr) {
     if (high - low >= 3) {
-        medianOfThree(arr, low, high, comp);
+        medianOfThree(arr, low, high, comp, swapCount);
     }
     T pivot = arr[high];
     int i = low - 1;
     for (int j = low; j < high; ++j)
-        if (comp(arr[j], pivot)) { ++i; qSwap(arr[i], arr[j]); }
+        if (comp(arr[j], pivot)) { ++i; qSwap(arr[i], arr[j]); if (swapCount) ++(*swapCount); }
     qSwap(arr[i+1], arr[high]);
+    if (swapCount) ++(*swapCount);
     return i + 1;
 }
 
 // Insertion sort for small subarrays (cutoff optimization)
 template<typename T>
 void insertionSortRange(QVector<T>& arr, int low, int high,
-                        std::function<bool(const T&, const T&)>& comp) {
+                        std::function<bool(const T&, const T&)>& comp,
+                        long long* moveCount = nullptr) {
     for (int i = low + 1; i <= high; ++i) {
         T key = arr[i];
         int j = i - 1;
         while (j >= low && comp(key, arr[j])) {
             arr[j+1] = arr[j];
+            if (moveCount) ++(*moveCount);
             --j;
         }
         arr[j+1] = key;
+        if (moveCount) ++(*moveCount);
     }
 }
 
 template<typename T>
 void quickSortHelper(QVector<T>& arr, int low, int high,
-                     std::function<bool(const T&, const T&)>& comp) {
+                     std::function<bool(const T&, const T&)>& comp,
+                     long long* swapCount = nullptr) {
     // Cutoff to insertion sort for small subarrays: reduces overhead of recursive
     // calls and partitioning; empirically optimal in the range 10-20 for cache efficiency.
     if (high - low < 16) {
-        if (low < high) insertionSortRange(arr, low, high, comp);
+        if (low < high) insertionSortRange(arr, low, high, comp, swapCount);
         return;
     }
-    int pi = partition(arr, low, high, comp);
-    quickSortHelper(arr, low, pi - 1, comp);
-    quickSortHelper(arr, pi + 1, high, comp);
+    int pi = partition(arr, low, high, comp, swapCount);
+    quickSortHelper(arr, low, pi - 1, comp, swapCount);
+    quickSortHelper(arr, pi + 1, high, comp, swapCount);
 }
 } // namespace detail
 
 template<typename T>
 void quickSort(QVector<T>& arr,
-    std::function<bool(const T&, const T&)> comp = [](const T& a, const T& b){ return a < b; }) {
+    std::function<bool(const T&, const T&)> comp = [](const T& a, const T& b){ return a < b; },
+    long long* swapCount = nullptr) {
     if (arr.size() > 1)
-        detail::quickSortHelper(arr, 0, arr.size() - 1, comp);
+        detail::quickSortHelper(arr, 0, arr.size() - 1, comp, swapCount);
 }

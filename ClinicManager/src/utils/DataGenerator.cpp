@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <set>
+#include <atomic>
 
 static std::mt19937& rng() {
     static std::mt19937 gen(std::random_device{}());
@@ -158,9 +159,14 @@ QVector<Consulta> DataGenerator::generateConsultas(const QVector<Paciente>& paci
     consultas.reserve(count);
     if (pacientes.isEmpty()) return consultas;
 
+    // Globally incrementing counter to guarantee unique IDs across multiple
+    // generateConsultas calls (e.g., when benchmark generates extra records).
+    static std::atomic<int> nextConsId{1};
     for (int i = 0; i < count; ++i) {
         Consulta c;
-        c.idConsulta = QString("CONS-%1").arg(i + 1, 6, 10, QChar('0')).toStdString();
+        int id = nextConsId.fetch_add(1);
+        // 8 digits to accommodate large benchmark datasets (up to ~99 million)
+        c.idConsulta = QString("CONS-%1").arg(id, 8, 10, QChar('0')).toStdString();
         const Paciente& p = pacientes[randInt(0, pacientes.size() - 1)];
         c.cedulaPaciente = p.cedula;
         c.fecha = randomDate(2020, 2024).toStdString();

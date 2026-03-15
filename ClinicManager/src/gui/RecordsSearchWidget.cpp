@@ -120,7 +120,7 @@ void RecordsSearchWidget::setupUI() {
     // Results table
     resultsTable_ = new QTableWidget(0, 6, this);
     resultsTable_->setHorizontalHeaderLabels(
-        {"Cedula / ID", "Nombre / Medico", "Fecha", "Diagnostico", "Campo4", "Campo5"});
+        {"Cedula", "Nombre", "Fecha", "Diagnostico", "Prioridad", "Canton"});
     resultsTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     resultsTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
     resultsTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -267,16 +267,16 @@ void RecordsSearchWidget::onSearchByDate() {
         return;
     }
 
-    // Binary search
+    // Binary search on the already-sorted consultas
     auto results = module_->searchByDateRange(from, to);
     showConsultaResults(results);
     double binaryTime = module_->getLastSearchTimeMs();
 
-    // Linear search for comparison (don't show - just time)
-    auto t0 = std::chrono::high_resolution_clock::now();
+    // Linear search for comparison on the SAME dataset (const ref, no copy)
+    const QVector<Consulta>& allRef = module_->getAllConsultasRef();
     std::string sf = from.toStdString(), st = to.toStdString();
-    QVector<Consulta> all = module_->getAllConsultas();
-    linearSearchAll<Consulta>(all, [&](const Consulta& c){
+    auto t0 = std::chrono::high_resolution_clock::now();
+    linearSearchAll<Consulta>(allRef, [&](const Consulta& c){
         return c.fecha >= sf && c.fecha <= st;
     });
     double linearTime = std::chrono::duration<double, std::milli>(

@@ -102,3 +102,7 @@ QVector<Paciente> Module2_RecordsSearch::getAllPacientes() const {
 QVector<Consulta> Module2_RecordsSearch::getAllConsultas() const {
     return consultas_;
 }
+
+const QVector<Consulta>& Module2_RecordsSearch::getAllConsultasRef() const {
+    return consultas_;
+}

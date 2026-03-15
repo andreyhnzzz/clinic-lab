@@ -1,6 +1,7 @@
 #include "AttentionQueueWidget.h"
 #include "../utils/DataGenerator.h"
 #include "../core/ClinicDataStore.h"
+#include "../data_structures/DiagnosisTree.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -16,6 +17,8 @@
 #include <QFrame>
 #include <QFont>
 #include <QSplitter>
+#include <QTreeWidget>
+#include <QGroupBox>
 
 AttentionQueueWidget::AttentionQueueWidget(QWidget* parent)
     : QWidget(parent) {
@@ -285,10 +288,11 @@ void AttentionQueueWidget::onAttendNext() {
     }
     Paciente p = module_->attendNextPatient();
 
-    // Clinical flow: open a brief consultation dialog
+    // Clinical flow: open a consultation dialog with structured diagnosis selector
     QDialog dlg(this);
     dlg.setWindowTitle("Registrar Consulta - Flujo Clinico");
-    dlg.setMinimumWidth(440);
+    dlg.setMinimumWidth(540);
+    dlg.setMinimumHeight(480);
     auto* form = new QFormLayout(&dlg);
 
     auto* lblInfo = new QLabel(QString("Paciente: <b>%1</b> | Cedula: %2")
@@ -306,15 +310,98 @@ void AttentionQueueWidget::onAttendNext() {
     spCosto->setSingleStep(5000);
     spCosto->setValue(25000);
     spCosto->setSuffix(" CRC");
-    auto* edDiag = new QLineEdit(&dlg);
-    edDiag->setText(QString::fromStdString(p.diagnostico));
+
+    // --- Structured diagnosis selector from the tree ---
+    auto* diagGroup = new QGroupBox("Seleccion de Diagnostico (desde arbol ICD-10)", &dlg);
+    auto* diagLayout = new QVBoxLayout(diagGroup);
+
+    auto* diagSearch = new QLineEdit(&dlg);
+    diagSearch->setPlaceholderText("Buscar diagnostico por nombre o codigo...");
+    diagLayout->addWidget(diagSearch);
+
+    auto* diagTree = new QTreeWidget(&dlg);
+    diagTree->setHeaderLabels({"Diagnostico", "Codigo"});
+    diagTree->setMinimumHeight(150);
+    diagTree->setMaximumHeight(200);
+
+    // Populate tree from ClinicDataStore diagnosis tree
+    auto& tree = ClinicDataStore::instance().diagnosisTree();
+    DiagnosisNode* treeRoot = tree.root();
+    if (treeRoot) {
+        for (auto* areaNode : treeRoot->children) {
+            auto* areaItem = new QTreeWidgetItem(diagTree, {areaNode->name, ""});
+            areaItem->setFlags(areaItem->flags() & ~Qt::ItemIsSelectable);
+            for (auto* specNode : areaNode->children) {
+                auto* specItem = new QTreeWidgetItem(areaItem, {specNode->name, ""});
+                specItem->setFlags(specItem->flags() & ~Qt::ItemIsSelectable);
+                for (auto* diagNode : specNode->children) {
+                    new QTreeWidgetItem(specItem,
+                        {diagNode->name, diagNode->code});
+                }
+            }
+        }
+    }
+    diagLayout->addWidget(diagTree);
+
+    auto* lblSelected = new QLabel("Seleccionado: (ninguno)");
+    lblSelected->setStyleSheet("color: #A7B1BC; font-size: 11px;");
+    diagLayout->addWidget(lblSelected);
+
+    // Track selected diagnosis info
+    QString selectedDiagName, selectedDiagCode, selectedArea, selectedSpecialty;
+
+    QObject::connect(diagTree, &QTreeWidget::itemClicked, &dlg,
+        [&](QTreeWidgetItem* item, int) {
+            if (!item || item->text(1).isEmpty()) return; // Not a leaf diagnosis
+            selectedDiagName = item->text(0);
+            selectedDiagCode = item->text(1);
+            // Get area and specialty from parents
+            if (item->parent()) {
+                selectedSpecialty = item->parent()->text(0);
+                if (item->parent()->parent())
+                    selectedArea = item->parent()->parent()->text(0);
+            }
+            lblSelected->setText(QString("Seleccionado: [%1] %2 (%3 > %4)")
+                .arg(selectedDiagCode).arg(selectedDiagName)
+                .arg(selectedArea).arg(selectedSpecialty));
+        });
+
+    // Search/filter functionality
+    QObject::connect(diagSearch, &QLineEdit::textChanged, &dlg,
+        [diagTree](const QString& text) {
+            QString lower = text.toLower();
+            for (int i = 0; i < diagTree->topLevelItemCount(); ++i) {
+                auto* area = diagTree->topLevelItem(i);
+                bool areaVisible = false;
+                for (int j = 0; j < area->childCount(); ++j) {
+                    auto* spec = area->child(j);
+                    bool specVisible = false;
+                    for (int k = 0; k < spec->childCount(); ++k) {
+                        auto* diag = spec->child(k);
+                        bool match = text.isEmpty()
+                            || diag->text(0).toLower().contains(lower)
+                            || diag->text(1).toLower().contains(lower);
+                        diag->setHidden(!match);
+                        if (match) {
+                            specVisible = true;
+                            areaVisible = true;
+                        }
+                    }
+                    spec->setHidden(!specVisible);
+                    if (specVisible) spec->setExpanded(true);
+                }
+                area->setHidden(!areaVisible);
+                if (areaVisible) area->setExpanded(true);
+            }
+        });
+
     auto* edNotas = new QLineEdit(&dlg);
     edNotas->setPlaceholderText("Notas adicionales...");
 
     form->addRow("Motivo:", edMotivo);
     form->addRow("Gravedad:", cbGravedad);
     form->addRow("Costo:", spCosto);
-    form->addRow("Diagnostico:", edDiag);
+    form->addRow(diagGroup);
     form->addRow("Notas:", edNotas);
 
     auto* buttons = new QDialogButtonBox(
@@ -331,18 +418,31 @@ void AttentionQueueWidget::onAttendNext() {
         c.fecha = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
         static const char* DEFAULT_MEDICO = "Medico de turno";
         c.medicoTratante = DEFAULT_MEDICO;
-        c.diagnostico = edDiag->text().isEmpty() ? p.diagnostico : edDiag->text().toStdString();
+        // Use structured diagnosis if selected, otherwise fallback to patient's existing
+        if (!selectedDiagName.isEmpty()) {
+            c.diagnostico = selectedDiagName.toStdString();
+            c.codigoDiagnostico = selectedDiagCode.toStdString();
+            c.areaDiagnostico = selectedArea.toStdString();
+            c.especialidadDiagnostico = selectedSpecialty.toStdString();
+        } else {
+            c.diagnostico = p.diagnostico;
+        }
         c.gravedad = cbGravedad->currentIndex() + 1;
         c.costo = spCosto->value();
         c.notas = edNotas->text().toStdString();
 
         ClinicDataStore::instance().addConsulta(c);
 
+        QString diagInfo = selectedDiagCode.isEmpty()
+            ? QString::fromStdString(c.diagnostico)
+            : QString("[%1] %2").arg(selectedDiagCode).arg(selectedDiagName);
+
         QMessageBox::information(this, "Consulta Registrada",
             QString("Paciente atendido y consulta registrada:\n\n"
-                    "Cedula: %1\nNombre: %2\nGravedad: %3\nCosto: %4 CRC")
+                    "Cedula: %1\nNombre: %2\nDiagnostico: %3\nGravedad: %4\nCosto: %5 CRC")
                 .arg(QString::fromStdString(p.cedula))
                 .arg(QString::fromStdString(p.nombre))
+                .arg(diagInfo)
                 .arg(c.gravedad)
                 .arg(c.costo, 0, 'f', 0));
     } else {
