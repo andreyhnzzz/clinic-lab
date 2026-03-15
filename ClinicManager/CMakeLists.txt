@@ -15,6 +15,9 @@ set(SOURCES
     src/models/Consulta.cpp
     src/models/Diagnostico.cpp
     src/core/ClinicDataStore.cpp
+    src/core/SystemAudit.cpp
+    src/core/EventLog.cpp
+    src/core/JsonPersistence.cpp
     src/data_structures/DiagnosisTree.cpp
     src/modules/Module1_AttentionQueue.cpp
     src/modules/Module2_RecordsSearch.cpp
@@ -27,6 +30,9 @@ set(SOURCES
     src/gui/RecordsSearchWidget.cpp
     src/gui/DiagnosisTreeWidget.cpp
     src/gui/PerformanceLabWidget.cpp
+    src/gui/DashboardWidget.cpp
+    src/gui/AuditWidget.cpp
+    src/gui/EventLogWidget.cpp
 )
 
 set(HEADERS
@@ -34,6 +40,9 @@ set(HEADERS
     src/models/Consulta.h
     src/models/Diagnostico.h
     src/core/ClinicDataStore.h
+    src/core/SystemAudit.h
+    src/core/EventLog.h
+    src/core/JsonPersistence.h
     src/data_structures/PriorityQueue.h
     src/data_structures/DiagnosisTree.h
     src/data_structures/HashTable.h
@@ -55,6 +64,9 @@ set(HEADERS
     src/gui/RecordsSearchWidget.h
     src/gui/DiagnosisTreeWidget.h
     src/gui/PerformanceLabWidget.h
+    src/gui/DashboardWidget.h
+    src/gui/AuditWidget.h
+    src/gui/EventLogWidget.h
 )
 
 qt_add_executable(ClinicManager

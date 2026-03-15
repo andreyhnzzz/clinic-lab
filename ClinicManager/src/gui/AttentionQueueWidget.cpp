@@ -12,6 +12,7 @@
 #include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QMessageBox>
+#include <QDateTime>
 #include <QFrame>
 #include <QFont>
 #include <QSplitter>
@@ -22,6 +23,12 @@ AttentionQueueWidget::AttentionQueueWidget(QWidget* parent)
     setupUI();
     connect(module_, &Module1_AttentionQueue::queueChanged,
             this, &AttentionQueueWidget::refreshTable);
+
+    // Phase 3E: QTimer to refresh wait time metrics every 15 seconds
+    waitTimer_ = new QTimer(this);
+    connect(waitTimer_, &QTimer::timeout, this, &AttentionQueueWidget::refreshWaitMetrics);
+    waitTimer_->start(15000);
+
     addSamplePatients(8);
 }
 
@@ -264,17 +271,87 @@ void AttentionQueueWidget::onRegisterPatient() {
     ClinicDataStore::instance().addPaciente(p);
 }
 
+void AttentionQueueWidget::refreshWaitMetrics() {
+    if (module_->isEmpty()) return;
+    double avgWait = module_->getAverageWaitTimeMinutes();
+    lblAvgWait_->setText(QString("%1 min").arg(avgWait, 0, 'f', 1));
+    progressWait_->setValue(static_cast<int>(qMin(avgWait, 60.0)));
+}
+
 void AttentionQueueWidget::onAttendNext() {
     if (module_->isEmpty()) {
         QMessageBox::information(this, "Cola vacia", "No hay pacientes en la cola.");
         return;
     }
     Paciente p = module_->attendNextPatient();
-    QMessageBox::information(this, "Paciente Atendido",
-        QString("Paciente atendido:\n\nCedula: %1\nNombre: %2\nPrioridad: %3")
-            .arg(QString::fromStdString(p.cedula))
-            .arg(QString::fromStdString(p.nombre))
-            .arg(p.prioridad));
+
+    // Clinical flow: open a brief consultation dialog
+    QDialog dlg(this);
+    dlg.setWindowTitle("Registrar Consulta - Flujo Clinico");
+    dlg.setMinimumWidth(440);
+    auto* form = new QFormLayout(&dlg);
+
+    auto* lblInfo = new QLabel(QString("Paciente: <b>%1</b> | Cedula: %2")
+        .arg(QString::fromStdString(p.nombre))
+        .arg(QString::fromStdString(p.cedula)));
+    form->addRow(lblInfo);
+
+    auto* edMotivo = new QLineEdit(&dlg);
+    edMotivo->setPlaceholderText("Motivo de consulta...");
+    auto* cbGravedad = new QComboBox(&dlg);
+    cbGravedad->addItems({"1 - Leve", "2 - Moderado", "3 - Medio", "4 - Grave", "5 - Critico"});
+    cbGravedad->setCurrentIndex(1);
+    auto* spCosto = new QSpinBox(&dlg);
+    spCosto->setRange(5000, 5000000);
+    spCosto->setSingleStep(5000);
+    spCosto->setValue(25000);
+    spCosto->setSuffix(" CRC");
+    auto* edDiag = new QLineEdit(&dlg);
+    edDiag->setText(QString::fromStdString(p.diagnostico));
+    auto* edNotas = new QLineEdit(&dlg);
+    edNotas->setPlaceholderText("Notas adicionales...");
+
+    form->addRow("Motivo:", edMotivo);
+    form->addRow("Gravedad:", cbGravedad);
+    form->addRow("Costo:", spCosto);
+    form->addRow("Diagnostico:", edDiag);
+    form->addRow("Notas:", edNotas);
+
+    auto* buttons = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    form->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if (dlg.exec() == QDialog::Accepted) {
+        // Create consultation and persist it
+        Consulta c;
+        c.idConsulta = ("CONS-" + QDateTime::currentDateTime().toString("yyyyMMddHHmmsszzz")).toStdString();
+        c.cedulaPaciente = p.cedula;
+        c.fecha = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
+        c.medicoTratante = "Medico de turno";
+        c.diagnostico = edDiag->text().isEmpty() ? p.diagnostico : edDiag->text().toStdString();
+        c.gravedad = cbGravedad->currentIndex() + 1;
+        c.costo = spCosto->value();
+        c.notas = edNotas->text().toStdString();
+
+        ClinicDataStore::instance().addConsulta(c);
+
+        QMessageBox::information(this, "Consulta Registrada",
+            QString("Paciente atendido y consulta registrada:\n\n"
+                    "Cedula: %1\nNombre: %2\nGravedad: %3\nCosto: %4 CRC")
+                .arg(QString::fromStdString(p.cedula))
+                .arg(QString::fromStdString(p.nombre))
+                .arg(c.gravedad)
+                .arg(c.costo, 0, 'f', 0));
+    } else {
+        QMessageBox::information(this, "Paciente Atendido",
+            QString("Paciente atendido (sin consulta registrada):\n\n"
+                    "Cedula: %1\nNombre: %2\nPrioridad: %3")
+                .arg(QString::fromStdString(p.cedula))
+                .arg(QString::fromStdString(p.nombre))
+                .arg(p.prioridad));
+    }
 }
 
 int AttentionQueueWidget::queueSize() const {
